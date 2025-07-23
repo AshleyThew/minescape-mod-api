@@ -29,7 +29,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.YourUsername:minescape-mod-api:1.0.0'
+    implementation 'com.github.AshleyThew:minescape-mod-api:1.0.0'
 }
 ```
 
@@ -47,7 +47,7 @@ Add the following to your `pom.xml` file:
 
 <dependencies>
     <dependency>
-        <groupId>com.github.YourUsername</groupId>
+        <groupId>com.github.AshleyThew</groupId>
         <artifactId>minescape-mod-api</artifactId>
         <version>1.0.0</version>
     </dependency>
@@ -91,12 +91,14 @@ double total = expData.totalExperience();
 ## Building from Source
 
 1. Clone the repository:
+
    ```bash
-   git clone https://github.com/YourUsername/minescape-mod-api.git
+   git clone https://github.com/AshleyThew/minescape-mod-api.git
    cd minescape-mod-api
    ```
 
 2. Build the project:
+
    ```bash
    ./gradlew build
    ```
