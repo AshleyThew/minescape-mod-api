@@ -14,11 +14,11 @@ public enum Channels {
     // Support for other channels in future
     ;
 
-    private final String name;
+    private final String channelName;
     private Class<? extends Enum<? extends Supplier<Class<?>>>> channelType;
 
     Channels(String name, Class<? extends Enum<? extends Supplier<Class<?>>>> channelType) {
-        this.name = "minescape_server:" + name;
+        this.channelName = "minescape_server:" + name;
         this.channelType = channelType;
     }
 
@@ -27,8 +27,8 @@ public enum Channels {
      * 
      * @return the channel name
      */
-    public String getName() {
-        return name;
+    public String getChannelName() {
+        return channelName;
     }
 
     /**

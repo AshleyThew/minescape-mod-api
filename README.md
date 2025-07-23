@@ -31,7 +31,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.AshleyThew:minescape-mod-api:1.0.0'
+    implementation 'com.github.AshleyThew:minescape-mod-api:-SNAPSHOT'
 }
 ```
 
@@ -51,10 +51,21 @@ Add the following to your `pom.xml` file:
     <dependency>
         <groupId>com.github.AshleyThew</groupId>
         <artifactId>minescape-mod-api</artifactId>
-        <version>1.0.0</version>
+        <version>-SNAPSHOT</version>
     </dependency>
 </dependencies>
 ```
+
+### Version Options
+
+JitPack supports several versioning strategies:
+
+- **Latest commit from main branch**: Use `-SNAPSHOT`
+- **Specific release tag**: Use the tag name (e.g., `1.0.0`, `v2.1.0`)
+- **Specific commit**: Use the commit hash (e.g., `abc123def`)
+- **Specific branch**: Use `branch-SNAPSHOT` (e.g., `develop-SNAPSHOT`)
+
+For production environments, it's recommended to use specific release tags for stability. For development, `-SNAPSHOT` ensures you always get the latest changes.
 
 ## Usage
 
@@ -67,10 +78,13 @@ import com.minescape.mod.api.channel.general.GeneralType;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+// Read in on this plugin channel
+String channelName = Channels.GENERAL.getChannelName();
+
 // Initialize channel handler for general channel
 ChannelDataHandler<GeneralType> handler = new ChannelDataHandler<>(Channels.GENERAL, GeneralType.class);
 
-// Handle incoming JSON data
+// Handle incoming JSON data, this will be from your channel handler
 String jsonString = "{\"type\":\"LOGIN_SKILLS\",\"data\":{\"skillType\":\"ATTACK\",\"level\":75,\"experience\":1210421.0}}";
 JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
 
