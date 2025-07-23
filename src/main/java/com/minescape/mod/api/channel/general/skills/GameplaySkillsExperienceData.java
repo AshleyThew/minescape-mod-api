@@ -2,25 +2,50 @@ package com.minescape.mod.api.channel.general.skills;
 
 import com.minescape.mod.api.types.skills.SkillType;
 
+/**
+ * Data class representing experience gained during gameplay for a specific skill.
+ */
 public class GameplaySkillsExperienceData {
     private final SkillType skillType;
     private final double experienceGained;
     private final double totalExperience;
 
+    /**
+     * Creates a new GameplaySkillsExperienceData instance.
+     * 
+     * @param skillType the skill that gained experience
+     * @param experienceGained the amount of experience gained
+     * @param totalExperience the total experience after gaining
+     */
     public GameplaySkillsExperienceData(SkillType skillType, double experienceGained, double totalExperience) {
         this.skillType = skillType;
         this.experienceGained = experienceGained;
         this.totalExperience = totalExperience;
     }
 
+    /**
+     * Gets the skill type that gained experience.
+     * 
+     * @return the skill type
+     */
     public SkillType skillType() {
         return skillType;
     }
 
+    /**
+     * Gets the amount of experience gained.
+     * 
+     * @return the experience gained
+     */
     public double experienceGained() {
         return experienceGained;
     }
 
+    /**
+     * Gets the total experience after gaining.
+     * 
+     * @return the total experience
+     */
     public double totalExperience() {
         return totalExperience;
     }

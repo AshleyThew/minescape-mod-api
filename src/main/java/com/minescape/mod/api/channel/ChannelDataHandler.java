@@ -8,7 +8,7 @@ import java.util.function.Supplier;
  * Handler for processing channel data from JSON strings and creating
  * appropriate data objects.
  * 
- * @param <T> The enum type that implements Supplier<Class<?>>
+ * @param <T> The enum type that implements Supplier&lt;Class&lt;?&gt;&gt;
  */
 public class ChannelDataHandler<T extends Enum<T> & Supplier<Class<?>>> {
 
