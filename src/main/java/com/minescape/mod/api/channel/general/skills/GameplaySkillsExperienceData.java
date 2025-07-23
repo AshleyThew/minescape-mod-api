@@ -3,7 +3,8 @@ package com.minescape.mod.api.channel.general.skills;
 import com.minescape.mod.api.types.skills.SkillType;
 
 /**
- * Data class representing experience gained during gameplay for a specific skill.
+ * Data class representing experience gained during gameplay for a specific
+ * skill.
  */
 public class GameplaySkillsExperienceData {
     private final SkillType skillType;
@@ -13,9 +14,9 @@ public class GameplaySkillsExperienceData {
     /**
      * Creates a new GameplaySkillsExperienceData instance.
      * 
-     * @param skillType the skill that gained experience
+     * @param skillType        the skill that gained experience
      * @param experienceGained the amount of experience gained
-     * @param totalExperience the total experience after gaining
+     * @param totalExperience  the total experience after gaining
      */
     public GameplaySkillsExperienceData(SkillType skillType, double experienceGained, double totalExperience) {
         this.skillType = skillType;
@@ -57,9 +58,8 @@ public class GameplaySkillsExperienceData {
         if (obj == null || getClass() != obj.getClass())
             return false;
         GameplaySkillsExperienceData that = (GameplaySkillsExperienceData) obj;
-        return Double.compare(that.experienceGained, experienceGained) == 0 
-            && Double.compare(that.totalExperience, totalExperience) == 0 
-            && skillType == that.skillType;
+        return Double.compare(that.experienceGained, experienceGained) == 0
+                && Double.compare(that.totalExperience, totalExperience) == 0 && skillType == that.skillType;
     }
 
     @Override
@@ -74,10 +74,7 @@ public class GameplaySkillsExperienceData {
 
     @Override
     public String toString() {
-        return "GameplaySkillsExperienceData{" + 
-               "skillType=" + skillType + 
-               ", experienceGained=" + experienceGained + 
-               ", totalExperience=" + totalExperience + 
-               '}';
+        return "GameplaySkillsExperienceData{" + "skillType=" + skillType + ", experienceGained=" + experienceGained
+                + ", totalExperience=" + totalExperience + '}';
     }
 }

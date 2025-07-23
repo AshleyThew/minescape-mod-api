@@ -6,7 +6,8 @@ import com.minescape.mod.api.channel.general.skills.LoginSkillsData;
 import com.minescape.mod.api.channel.general.skills.GameplaySkillsExperienceData;
 
 /**
- * Enum representing different types of data that can be sent through the general channel.
+ * Enum representing different types of data that can be sent through the
+ * general channel.
  */
 public enum GeneralType implements Supplier<Class<?>> {
     /**

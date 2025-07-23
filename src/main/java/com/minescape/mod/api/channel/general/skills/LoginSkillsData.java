@@ -13,8 +13,8 @@ public class LoginSkillsData {
     /**
      * Creates a new LoginSkillsData instance.
      * 
-     * @param skillType the skill type
-     * @param level the current level of the skill
+     * @param skillType  the skill type
+     * @param level      the current level of the skill
      * @param experience the current experience in the skill
      */
     public LoginSkillsData(SkillType skillType, int level, double experience) {

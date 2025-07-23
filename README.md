@@ -1,5 +1,7 @@
 # MineScape Mod API
 
+[![](https://jitpack.io/v/AshleyThew/minescape-mod-api.svg)](https://jitpack.io/#AshleyThew/minescape-mod-api)
+
 A Java API library for MineScape mod development, providing channel-based communication and data handling capabilities.
 
 ## Features
