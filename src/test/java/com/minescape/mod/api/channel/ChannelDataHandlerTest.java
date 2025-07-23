@@ -116,12 +116,53 @@ class ChannelDataHandlerTest {
     }
 
     @Test
+    void testGetTypeLoginSkills() {
+        String jsonString = "{\"type\":\"LOGIN_SKILLS\",\"data\":{\"skillType\":\"ATTACK\",\"level\":75,\"experience\":1210421.0}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        GeneralType type = generalHandler.getType(jsonObject);
+
+        assertEquals(GeneralType.LOGIN_SKILLS, type);
+    }
+
+    @Test
+    void testGetTypeGameplaySkillsExperience() {
+        String jsonString = "{\"type\":\"GAMEPLAY_SKILLS_EXPERIENCE\",\"data\":{\"skillType\":\"COOKING\",\"experienceGained\":120.5,\"totalExperience\":8975.0}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        GeneralType type = generalHandler.getType(jsonObject);
+
+        assertEquals(GeneralType.GAMEPLAY_SKILLS_EXPERIENCE, type);
+    }
+
+    @Test
+    void testGetTypeInvalidType() {
+        String jsonString = "{\"type\":\"INVALID_TYPE\",\"data\":{}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            generalHandler.getType(jsonObject);
+        });
+    }
+
+    @Test
+    void testGetTypeMissingTypeField() {
+        String jsonString = "{\"data\":{\"skillType\":\"ATTACK\",\"level\":75,\"experience\":1210421.0}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            generalHandler.getType(jsonObject);
+        });
+    }
+
+    @Test
     void testSwitchExpressionWithLoginSkills() {
+
         String jsonString = "{\"type\":\"LOGIN_SKILLS\",\"data\":{\"skillType\":\"DEFENCE\",\"level\":60,\"experience\":273742.0}}";
         JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
 
         // Get type and data
-        GeneralType type = GeneralType.valueOf(jsonObject.get("type").getAsString());
+        GeneralType type = generalHandler.getType(jsonObject);
         Object data = generalHandler.getData(jsonObject);
 
         // Test switch expression pattern
@@ -141,11 +182,12 @@ class ChannelDataHandlerTest {
 
     @Test
     void testSwitchExpressionWithExperienceData() {
+
         String jsonString = "{\"type\":\"GAMEPLAY_SKILLS_EXPERIENCE\",\"data\":{\"skillType\":\"FISHING\",\"experienceGained\":50.0,\"totalExperience\":2500.0}}";
         JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
 
         // Get type and data
-        GeneralType type = GeneralType.valueOf(jsonObject.get("type").getAsString());
+        GeneralType type = generalHandler.getType(jsonObject);
         Object data = generalHandler.getData(jsonObject);
 
         // Test switch expression with Map return type
@@ -173,12 +215,15 @@ class ChannelDataHandlerTest {
 
     @Test
     void testSwitchStatementDataProcessing() {
+        // Initialize channel handler for general channel
+        ChannelDataHandler<GeneralType> handler = new ChannelDataHandler<>(Channels.GENERAL, GeneralType.class);
+
         String jsonString = "{\"type\":\"LOGIN_SKILLS\",\"data\":{\"skillType\":\"STRENGTH\",\"level\":85,\"experience\":3258594.0}}";
         JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
 
         // Get type and data
-        GeneralType type = GeneralType.valueOf(jsonObject.get("type").getAsString());
-        Object data = generalHandler.getData(jsonObject);
+        GeneralType type = handler.getType(jsonObject);
+        Object data = handler.getData(jsonObject);
 
         // Test switch statement for data processing
         StringBuilder output = new StringBuilder();

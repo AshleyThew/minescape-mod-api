@@ -85,12 +85,15 @@ import com.minescape.mod.api.channel.general.skills.LoginSkillsData;
 import com.minescape.mod.api.channel.general.skills.GameplaySkillsExperienceData;
 import com.minescape.mod.api.types.skills.SkillType;
 
+// Initialize channel handler for general channel
+ChannelDataHandler<GeneralType> handler = new ChannelDataHandler<>(Channels.GENERAL, GeneralType.class);
+
 // Handle incoming JSON data
 String jsonString = "{\"type\":\"LOGIN_SKILLS\",\"data\":{\"skillType\":\"MAGIC\",\"level\":99,\"experience\":13034431.0}}";
 JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
 
 // Get the general type and data
-GeneralType type = GeneralType.valueOf(jsonObject.get("type").getAsString());
+GeneralType type = handler.getType(jsonObject);
 Object data = handler.getData(jsonObject);
 
 // Handle different data types using modern switch expression
