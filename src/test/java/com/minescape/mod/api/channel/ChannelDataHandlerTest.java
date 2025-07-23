@@ -8,6 +8,7 @@ import com.minescape.mod.api.channel.general.GeneralType;
 import com.minescape.mod.api.types.skills.SkillType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
+import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ChannelDataHandlerTest {
@@ -112,5 +113,88 @@ class ChannelDataHandlerTest {
         assertEquals(SkillType.COOKING, result.skillType());
         assertEquals(120.5, result.experienceGained());
         assertEquals(8975.0, result.totalExperience());
+    }
+
+    @Test
+    void testSwitchExpressionWithLoginSkills() {
+        String jsonString = "{\"type\":\"LOGIN_SKILLS\",\"data\":{\"skillType\":\"DEFENCE\",\"level\":60,\"experience\":273742.0}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        // Get type and data
+        GeneralType type = GeneralType.valueOf(jsonObject.get("type").getAsString());
+        Object data = generalHandler.getData(jsonObject);
+
+        // Test switch expression pattern
+        String result = switch (type) {
+        case LOGIN_SKILLS -> {
+            LoginSkillsData loginData = (LoginSkillsData) data;
+            yield "Login: " + loginData.skillType() + " level " + loginData.level();
+        }
+        case GAMEPLAY_SKILLS_EXPERIENCE -> {
+            GameplaySkillsExperienceData expData = (GameplaySkillsExperienceData) data;
+            yield "Experience: " + expData.experienceGained() + " in " + expData.skillType();
+        }
+        };
+
+        assertEquals("Login: DEFENCE level 60", result);
+    }
+
+    @Test
+    void testSwitchExpressionWithExperienceData() {
+        String jsonString = "{\"type\":\"GAMEPLAY_SKILLS_EXPERIENCE\",\"data\":{\"skillType\":\"FISHING\",\"experienceGained\":50.0,\"totalExperience\":2500.0}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        // Get type and data
+        GeneralType type = GeneralType.valueOf(jsonObject.get("type").getAsString());
+        Object data = generalHandler.getData(jsonObject);
+
+        // Test switch expression with Map return type
+        Object processedData = switch (type) {
+        case LOGIN_SKILLS -> {
+            LoginSkillsData loginData = (LoginSkillsData) data;
+            yield Map.of("type", "login", "skill", loginData.skillType().toString(), "level", loginData.level());
+        }
+        case GAMEPLAY_SKILLS_EXPERIENCE -> {
+            GameplaySkillsExperienceData expData = (GameplaySkillsExperienceData) data;
+            yield Map.of("type", "experience", "skill", expData.skillType().toString(), "gained",
+                    expData.experienceGained(), "total", expData.totalExperience());
+        }
+        };
+
+        assertTrue(processedData instanceof Map);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> resultMap = (Map<String, Object>) processedData;
+
+        assertEquals("experience", resultMap.get("type"));
+        assertEquals("FISHING", resultMap.get("skill"));
+        assertEquals(50.0, resultMap.get("gained"));
+        assertEquals(2500.0, resultMap.get("total"));
+    }
+
+    @Test
+    void testSwitchStatementDataProcessing() {
+        String jsonString = "{\"type\":\"LOGIN_SKILLS\",\"data\":{\"skillType\":\"STRENGTH\",\"level\":85,\"experience\":3258594.0}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        // Get type and data
+        GeneralType type = GeneralType.valueOf(jsonObject.get("type").getAsString());
+        Object data = generalHandler.getData(jsonObject);
+
+        // Test switch statement for data processing
+        StringBuilder output = new StringBuilder();
+        switch (type) {
+        case LOGIN_SKILLS -> {
+            LoginSkillsData loginData = (LoginSkillsData) data;
+            output.append("Logged in with ").append(loginData.skillType()).append(" at level ")
+                    .append(loginData.level()).append(" (").append(loginData.experience()).append(" XP)");
+        }
+        case GAMEPLAY_SKILLS_EXPERIENCE -> {
+            GameplaySkillsExperienceData expData = (GameplaySkillsExperienceData) data;
+            output.append("Gained ").append(expData.experienceGained()).append(" XP in ").append(expData.skillType())
+                    .append(" (total: ").append(expData.totalExperience()).append(")");
+        }
+        }
+
+        assertEquals("Logged in with STRENGTH at level 85 (3258594.0 XP)", output.toString());
     }
 }

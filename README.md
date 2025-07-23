@@ -63,31 +63,53 @@ Add the following to your `pom.xml` file:
 ```java
 import com.minescape.mod.api.channel.ChannelDataHandler;
 import com.minescape.mod.api.channel.Channels;
+import com.minescape.mod.api.channel.general.GeneralType;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
-// Initialize channel handler
-ChannelDataHandler handler = new ChannelDataHandler();
+// Initialize channel handler for general channel
+ChannelDataHandler<GeneralType> handler = new ChannelDataHandler<>(Channels.GENERAL, GeneralType.class);
 
-// Register channels and handle data
-// Example usage would go here based on your specific implementation
+// Handle incoming JSON data
+String jsonString = "{\"type\":\"LOGIN_SKILLS\",\"data\":{\"skillType\":\"ATTACK\",\"level\":75,\"experience\":1210421.0}}";
+JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+// Parse and handle the data
+Object result = handler.getData(jsonObject);
 ```
 
 ### Skills Experience Tracking
 
 ```java
+import com.minescape.mod.api.channel.general.skills.LoginSkillsData;
 import com.minescape.mod.api.channel.general.skills.GameplaySkillsExperienceData;
 import com.minescape.mod.api.types.skills.SkillType;
 
-// Create experience data
-GameplaySkillsExperienceData expData = new GameplaySkillsExperienceData(
-    SkillType.MINING,
-    15.5,      // experience gained
-    1250.0     // total experience
-);
+// Handle incoming JSON data
+String jsonString = "{\"type\":\"LOGIN_SKILLS\",\"data\":{\"skillType\":\"MAGIC\",\"level\":99,\"experience\":13034431.0}}";
+JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
 
-// Access data
-SkillType skill = expData.skillType();
-double gained = expData.experienceGained();
-double total = expData.totalExperience();
+// Get the general type and data
+GeneralType type = GeneralType.valueOf(jsonObject.get("type").getAsString());
+Object data = handler.getData(jsonObject);
+
+// Handle different data types using modern switch expression
+switch (type) {
+    case LOGIN_SKILLS -> {
+        LoginSkillsData loginData = (LoginSkillsData) data;
+        SkillType skillType = loginData.skillType();  // MAGIC
+        int level = loginData.level();               // 99
+        double experience = loginData.experience();   // 13034431.0
+        System.out.println("Login skills: " + skillType + " level " + level + " with " + experience + " XP");
+    }
+    case GAMEPLAY_SKILLS_EXPERIENCE -> {
+        GameplaySkillsExperienceData expData = (GameplaySkillsExperienceData) data;
+        SkillType skill = expData.skillType();           // Skill type
+        double gained = expData.experienceGained();      // Experience gained
+        double total = expData.totalExperience();        // Total experience
+        System.out.println("Gained " + gained + " XP in " + skill + " (total: " + total + ")");
+    }
+}
 ```
 
 ## Building from Source
