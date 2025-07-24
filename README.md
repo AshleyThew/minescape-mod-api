@@ -31,7 +31,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.AshleyThew:minescape-mod-api:-SNAPSHOT'
+    implementation 'com.github.AshleyThew:minescape-mod-api:v1.0.2'
 }
 ```
 
