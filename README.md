@@ -160,70 +160,73 @@ import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 
-public record MinescapePacket(String jsonData) implements CustomPacketPayload {
+public class MineScapeAPIExample {
 
-    public static final CustomPacketPayload.Type<MinescapePacket> TYPE =
-        new CustomPacketPayload.Type<>(ResourceLocation.parse(Channels.GENERAL.getChannelName()));
+    public record MineScapePacket(String jsonData) implements CustomPacketPayload {
 
-    private static final ChannelDataHandler<GeneralType> HANDLER =
-        new ChannelDataHandler<>(Channels.GENERAL, GeneralType.class);
+        public static final CustomPacketPayload.Type<MineScapePacket> TYPE =
+            new CustomPacketPayload.Type<>(ResourceLocation.parse(Channels.GENERAL.getChannelName()));
 
-    public static final StreamCodec<RegistryFriendlyByteBuf, MinescapePacket> STREAM_CODEC = StreamCodec.of(
-            (byteBuf, packet) -> {
-                ByteArrayDataOutput output = ByteStreams.newDataOutput();
-                output.writeUTF(packet.jsonData());
-                byteBuf.writeBytes(output.toByteArray());
-            },
-            (data) -> {
-                byte[] bytes = new byte[data.readableBytes()];
-                data.readBytes(bytes);
-                ByteArrayDataInput input = ByteStreams.newDataInput(bytes);
-                String json = input.readUTF();
-                return new MinescapePacket(json);
-            }
-    );
+        private static final ChannelDataHandler<GeneralType> HANDLER =
+            new ChannelDataHandler<>(Channels.GENERAL, GeneralType.class);
 
-    @Override
-    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
-        return TYPE;
-    }
-}
+        public static final StreamCodec<RegistryFriendlyByteBuf, MineScapePacket> STREAM_CODEC = StreamCodec.of(
+                (byteBuf, packet) -> {
+                    ByteArrayDataOutput output = ByteStreams.newDataOutput();
+                    output.writeUTF(packet.jsonData());
+                    byteBuf.writeBytes(output.toByteArray());
+                },
+                (data) -> {
+                    byte[] bytes = new byte[data.readableBytes()];
+                    data.readBytes(bytes);
+                    ByteArrayDataInput input = ByteStreams.newDataInput(bytes);
+                    String json = input.readUTF();
+                    return new MineScapePacket(json);
+                }
+        );
 
-@SubscribeEvent
-public static void register(RegisterPayloadHandlersEvent event) {
-    PayloadRegistrar registrar = event.registrar("1").optional();
-    registrar.playToClient(
-            MinescapePacket.TYPE,
-            MinescapePacket.STREAM_CODEC,
-            MinescapeNetworking::handlePacketOnMain
-    );
-}
-
-public static void handlePacketOnMain(final MinescapePacket packet, final IPayloadContext context) {
-    try {
-        // Parse the JSON data using MineScape API
-        JsonObject jsonObject = JsonParser.parseString(packet.jsonData()).getAsJsonObject();
-        GeneralType type = MinescapePacket.HANDLER.getType(jsonObject);
-        Object data = MinescapePacket.HANDLER.getData(jsonObject);
-
-        // Handle different data types
-        switch (type) {
-            case LOGIN_SKILLS -> {
-                LoginSkillsData loginData = (LoginSkillsData) data;
-                System.out.println("Received login skills data with " + loginData.levels().size() + " skills");
-
-                // Process skill data
-                loginData.levels().forEach((skill, level) -> {
-                    Double experience = loginData.getExperience(skill);
-                    System.out.println(skill + ": Level " + level + " (" + experience + " XP)");
-                });
-            }
-            case GAMEPLAY_SKILLS_EXPERIENCE -> {
-                // Handle other packet types...
-            }
+        @Override
+        public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+            return TYPE;
         }
-    } catch (Exception e) {
-        System.err.println("Failed to process MineScape packet: " + e.getMessage());
+    }
+
+    @SubscribeEvent
+    public void register(RegisterPayloadHandlersEvent event) {
+        PayloadRegistrar registrar = event.registrar("1").optional();
+        registrar.playToClient(
+                MineScapePacket.TYPE,
+                MineScapePacket.STREAM_CODEC,
+                this::handlePacketOnMain
+        );
+    }
+
+    public void handlePacketOnMain(final MineScapePacket packet, final IPayloadContext context) {
+        try {
+            // Parse the JSON data using MineScape API
+            JsonObject jsonObject = JsonParser.parseString(packet.jsonData()).getAsJsonObject();
+            GeneralType type = MineScapePacket.HANDLER.getType(jsonObject);
+            Object data = MineScapePacket.HANDLER.getData(jsonObject);
+
+            // Handle different data types
+            switch (type) {
+                case LOGIN_SKILLS -> {
+                    LoginSkillsData loginData = (LoginSkillsData) data;
+                    System.out.println("Received login skills data with " + loginData.levels().size() + " skills");
+
+                    // Process skill data
+                    loginData.levels().forEach((skill, level) -> {
+                        Double experience = loginData.getExperience(skill);
+                        System.out.println(skill + ": Level " + level + " (" + experience + " XP)");
+                    });
+                }
+                case GAMEPLAY_SKILLS_EXPERIENCE -> {
+                    // Handle other packet types...
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to process MineScape packet: " + e.getMessage());
+        }
     }
 }
 
