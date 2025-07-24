@@ -154,7 +154,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.common.io.ByteArrayDataInput;
@@ -166,7 +165,6 @@ public record MinescapePacket(String jsonData) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<MinescapePacket> TYPE =
         new CustomPacketPayload.Type<>(ResourceLocation.parse(Channels.GENERAL.getChannelName()));
 
-    private static final Gson GSON = new Gson();
     private static final ChannelDataHandler<GeneralType> HANDLER =
         new ChannelDataHandler<>(Channels.GENERAL, GeneralType.class);
 
