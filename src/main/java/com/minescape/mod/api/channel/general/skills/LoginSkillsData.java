@@ -1,53 +1,63 @@
 package com.minescape.mod.api.channel.general.skills;
 
 import com.minescape.mod.api.types.skills.SkillType;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * Data class representing skill information available at login.
  */
 public class LoginSkillsData {
-    private final SkillType skillType;
-    private final int level;
-    private final double experience;
+    private final Map<SkillType, Integer> levels;
+    private final Map<SkillType, Double> experiences;
 
     /**
      * Creates a new LoginSkillsData instance.
      * 
-     * @param skillType  the skill type
-     * @param level      the current level of the skill
-     * @param experience the current experience in the skill
+     * @param levels      a map of skill types to their current levels
+     * @param experiences a map of skill types to their current experience
      */
-    public LoginSkillsData(SkillType skillType, int level, double experience) {
-        this.skillType = skillType;
-        this.level = level;
-        this.experience = experience;
+    public LoginSkillsData(Map<SkillType, Integer> levels, Map<SkillType, Double> experiences) {
+        this.levels = Map.copyOf(levels);
+        this.experiences = Map.copyOf(experiences);
     }
 
     /**
-     * Gets the skill type.
+     * Gets the map of skill types to their current levels.
      * 
-     * @return the skill type
+     * @return an immutable map of skill levels
      */
-    public SkillType skillType() {
-        return skillType;
+    public Map<SkillType, Integer> levels() {
+        return levels;
     }
 
     /**
-     * Gets the current level of the skill.
+     * Gets the map of skill types to their current experience.
      * 
-     * @return the skill level
+     * @return an immutable map of skill experiences
      */
-    public int level() {
-        return level;
+    public Map<SkillType, Double> experiences() {
+        return experiences;
     }
 
     /**
-     * Gets the current experience in the skill.
+     * Gets the level for a specific skill type.
      * 
-     * @return the skill experience
+     * @param skillType the skill type
+     * @return the level for the skill, or null if not present
      */
-    public double experience() {
-        return experience;
+    public Integer getLevel(SkillType skillType) {
+        return levels.get(skillType);
+    }
+
+    /**
+     * Gets the experience for a specific skill type.
+     * 
+     * @param skillType the skill type
+     * @return the experience for the skill, or null if not present
+     */
+    public Double getExperience(SkillType skillType) {
+        return experiences.get(skillType);
     }
 
     @Override
@@ -57,20 +67,16 @@ public class LoginSkillsData {
         if (obj == null || getClass() != obj.getClass())
             return false;
         LoginSkillsData that = (LoginSkillsData) obj;
-        return level == that.level && Double.compare(that.experience, experience) == 0 && skillType == that.skillType;
+        return Objects.equals(levels, that.levels) && Objects.equals(experiences, that.experiences);
     }
 
     @Override
     public int hashCode() {
-        int result = skillType != null ? skillType.hashCode() : 0;
-        result = 31 * result + level;
-        long temp = Double.doubleToLongBits(experience);
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
-        return result;
+        return Objects.hash(levels, experiences);
     }
 
     @Override
     public String toString() {
-        return "LoginSkillsData{" + "skillType=" + skillType + ", level=" + level + ", experience=" + experience + '}';
+        return "LoginSkillsData{" + "levels=" + levels + ", experiences=" + experiences + '}';
     }
 }

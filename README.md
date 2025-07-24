@@ -102,8 +102,8 @@ import com.minescape.mod.api.types.skills.SkillType;
 // Initialize channel handler for general channel
 ChannelDataHandler<GeneralType> handler = new ChannelDataHandler<>(Channels.GENERAL, GeneralType.class);
 
-// Handle incoming JSON data
-String jsonString = "{\"type\":\"LOGIN_SKILLS\",\"data\":{\"skillType\":\"MAGIC\",\"level\":99,\"experience\":13034431.0}}";
+// Handle incoming JSON data with multiple skills
+String jsonString = "{\"type\":\"LOGIN_SKILLS\",\"data\":{\"levels\":{\"MAGIC\":99,\"ATTACK\":75},\"experiences\":{\"MAGIC\":13034431.0,\"ATTACK\":1210421.0}}}";
 JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
 
 // Get the general type and data
@@ -114,10 +114,18 @@ Object data = handler.getData(jsonObject);
 switch (type) {
     case LOGIN_SKILLS -> {
         LoginSkillsData loginData = (LoginSkillsData) data;
-        SkillType skillType = loginData.skillType();  // MAGIC
-        int level = loginData.level();               // 99
-        double experience = loginData.experience();   // 13034431.0
-        System.out.println("Login skills: " + skillType + " level " + level + " with " + experience + " XP");
+        Map<SkillType, Integer> levels = loginData.levels();        // All skill levels
+        Map<SkillType, Double> experiences = loginData.experiences(); // All skill experiences
+
+        // Access specific skills
+        Integer magicLevel = loginData.getLevel(SkillType.MAGIC);      // 99
+        Double magicExp = loginData.getExperience(SkillType.MAGIC);    // 13034431.0
+
+        System.out.println("Login skills loaded: " + levels.size() + " skills");
+        levels.forEach((skill, level) -> {
+            Double exp = experiences.get(skill);
+            System.out.println(skill + " level " + level + " with " + exp + " XP");
+        });
     }
     case GAMEPLAY_SKILLS_EXPERIENCE -> {
         GameplaySkillsExperienceData expData = (GameplaySkillsExperienceData) data;
@@ -127,6 +135,100 @@ switch (type) {
         System.out.println("Gained " + gained + " XP in " + skill + " (total: " + total + ")");
     }
 }
+```
+
+### NeoForge Integration
+
+Here's an example of how to integrate the MineScape API with NeoForge's custom packet system:
+
+```java
+import com.minescape.mod.api.channel.ChannelDataHandler;
+import com.minescape.mod.api.channel.Channels;
+import com.minescape.mod.api.channel.general.GeneralType;
+import com.minescape.mod.api.channel.general.skills.LoginSkillsData;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.common.io.ByteArrayDataInput;
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
+
+public record MinescapePacket(String jsonData) implements CustomPacketPayload {
+
+    public static final CustomPacketPayload.Type<MinescapePacket> TYPE =
+        new CustomPacketPayload.Type<>(ResourceLocation.parse(Channels.GENERAL.getChannelName()));
+
+    private static final Gson GSON = new Gson();
+    private static final ChannelDataHandler<GeneralType> HANDLER =
+        new ChannelDataHandler<>(Channels.GENERAL, GeneralType.class);
+
+    public static final StreamCodec<RegistryFriendlyByteBuf, MinescapePacket> STREAM_CODEC = StreamCodec.of(
+            (byteBuf, packet) -> {
+                ByteArrayDataOutput output = ByteStreams.newDataOutput();
+                output.writeUTF(packet.jsonData());
+                byteBuf.writeBytes(output.toByteArray());
+            },
+            (data) -> {
+                byte[] bytes = new byte[data.readableBytes()];
+                data.readBytes(bytes);
+                ByteArrayDataInput input = ByteStreams.newDataInput(bytes);
+                String json = input.readUTF();
+                return new MinescapePacket(json);
+            }
+    );
+
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+        return TYPE;
+    }
+}
+
+@SubscribeEvent
+public static void register(RegisterPayloadHandlersEvent event) {
+    PayloadRegistrar registrar = event.registrar("1").optional();
+    registrar.playToClient(
+            MinescapePacket.TYPE,
+            MinescapePacket.STREAM_CODEC,
+            MinescapeNetworking::handlePacketOnMain
+    );
+}
+
+public static void handlePacketOnMain(final MinescapePacket packet, final IPayloadContext context) {
+    try {
+        // Parse the JSON data using MineScape API
+        JsonObject jsonObject = JsonParser.parseString(packet.jsonData()).getAsJsonObject();
+        GeneralType type = MinescapePacket.HANDLER.getType(jsonObject);
+        Object data = MinescapePacket.HANDLER.getData(jsonObject);
+
+        // Handle different data types
+        switch (type) {
+            case LOGIN_SKILLS -> {
+                LoginSkillsData loginData = (LoginSkillsData) data;
+                System.out.println("Received login skills data with " + loginData.levels().size() + " skills");
+
+                // Process skill data
+                loginData.levels().forEach((skill, level) -> {
+                    Double experience = loginData.getExperience(skill);
+                    System.out.println(skill + ": Level " + level + " (" + experience + " XP)");
+                });
+            }
+            case GAMEPLAY_SKILLS_EXPERIENCE -> {
+                // Handle other packet types...
+            }
+        }
+    } catch (Exception e) {
+        System.err.println("Failed to process MineScape packet: " + e.getMessage());
+    }
+}
+
 ```
 
 ## Building from Source

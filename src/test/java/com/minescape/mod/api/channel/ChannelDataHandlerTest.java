@@ -22,8 +22,8 @@ class ChannelDataHandlerTest {
 
     @Test
     void testHandleGeneralChannelLoginSkills() {
-        // Test JSON string
-        String jsonString = "{\"type\":\"LOGIN_SKILLS\",\"data\":{\"skillType\":\"ATTACK\",\"level\":75,\"experience\":1210421.0}}";
+        // Test JSON string with multiple skills
+        String jsonString = "{\"type\":\"LOGIN_SKILLS\",\"data\":{\"levels\":{\"ATTACK\":75,\"DEFENCE\":60},\"experiences\":{\"ATTACK\":1210421.0,\"DEFENCE\":273742.0}}}";
         JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
 
         // Handle the data
@@ -33,23 +33,30 @@ class ChannelDataHandlerTest {
         assertTrue(result instanceof LoginSkillsData);
         LoginSkillsData loginSkillsData = (LoginSkillsData) result;
 
-        assertEquals(SkillType.ATTACK, loginSkillsData.skillType());
-        assertEquals(75, loginSkillsData.level());
-        assertEquals(1210421.0, loginSkillsData.experience());
+        // Test the maps
+        assertEquals(Integer.valueOf(75), loginSkillsData.getLevel(SkillType.ATTACK));
+        assertEquals(Integer.valueOf(60), loginSkillsData.getLevel(SkillType.DEFENCE));
+        assertEquals(Double.valueOf(1210421.0), loginSkillsData.getExperience(SkillType.ATTACK));
+        assertEquals(Double.valueOf(273742.0), loginSkillsData.getExperience(SkillType.DEFENCE));
+
+        // Test accessing via maps
+        assertEquals(2, loginSkillsData.levels().size());
+        assertEquals(2, loginSkillsData.experiences().size());
     }
 
     @Test
     void testHandleGeneralChannelWithTypeSafeCasting() {
-        String jsonString = "{\"type\":\"LOGIN_SKILLS\",\"data\":{\"skillType\":\"MAGIC\",\"level\":99,\"experience\":13034431.0}}";
+        String jsonString = "{\"type\":\"LOGIN_SKILLS\",\"data\":{\"levels\":{\"MAGIC\":99,\"COOKING\":85},\"experiences\":{\"MAGIC\":13034431.0,\"COOKING\":3258594.0}}}";
         JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
 
         // Use type-safe method
         LoginSkillsData result = generalHandler.getData(jsonObject, LoginSkillsData.class);
 
         assertNotNull(result);
-        assertEquals(SkillType.MAGIC, result.skillType());
-        assertEquals(99, result.level());
-        assertEquals(13034431.0, result.experience());
+        assertEquals(Integer.valueOf(99), result.getLevel(SkillType.MAGIC));
+        assertEquals(Integer.valueOf(85), result.getLevel(SkillType.COOKING));
+        assertEquals(Double.valueOf(13034431.0), result.getExperience(SkillType.MAGIC));
+        assertEquals(Double.valueOf(3258594.0), result.getExperience(SkillType.COOKING));
     }
 
     @Test
@@ -117,7 +124,7 @@ class ChannelDataHandlerTest {
 
     @Test
     void testGetTypeLoginSkills() {
-        String jsonString = "{\"type\":\"LOGIN_SKILLS\",\"data\":{\"skillType\":\"ATTACK\",\"level\":75,\"experience\":1210421.0}}";
+        String jsonString = "{\"type\":\"LOGIN_SKILLS\",\"data\":{\"levels\":{\"ATTACK\":75},\"experiences\":{\"ATTACK\":1210421.0}}}";
         JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
 
         GeneralType type = generalHandler.getType(jsonObject);
@@ -158,7 +165,7 @@ class ChannelDataHandlerTest {
     @Test
     void testSwitchExpressionWithLoginSkills() {
 
-        String jsonString = "{\"type\":\"LOGIN_SKILLS\",\"data\":{\"skillType\":\"DEFENCE\",\"level\":60,\"experience\":273742.0}}";
+        String jsonString = "{\"type\":\"LOGIN_SKILLS\",\"data\":{\"levels\":{\"DEFENCE\":60},\"experiences\":{\"DEFENCE\":273742.0}}}";
         JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
 
         // Get type and data
@@ -169,7 +176,10 @@ class ChannelDataHandlerTest {
         String result = switch (type) {
         case LOGIN_SKILLS -> {
             LoginSkillsData loginData = (LoginSkillsData) data;
-            yield "Login: " + loginData.skillType() + " level " + loginData.level();
+            // Get the first skill from the maps for demonstration
+            SkillType firstSkill = loginData.levels().keySet().iterator().next();
+            Integer level = loginData.getLevel(firstSkill);
+            yield "Login: " + firstSkill + " level " + level;
         }
         case GAMEPLAY_SKILLS_EXPERIENCE -> {
             GameplaySkillsExperienceData expData = (GameplaySkillsExperienceData) data;
@@ -194,7 +204,9 @@ class ChannelDataHandlerTest {
         Object processedData = switch (type) {
         case LOGIN_SKILLS -> {
             LoginSkillsData loginData = (LoginSkillsData) data;
-            yield Map.of("type", "login", "skill", loginData.skillType().toString(), "level", loginData.level());
+            // For demonstration, get info about all skills
+            yield Map.of("type", "login", "skillCount", loginData.levels().size(), "levels", loginData.levels(),
+                    "experiences", loginData.experiences());
         }
         case GAMEPLAY_SKILLS_EXPERIENCE -> {
             GameplaySkillsExperienceData expData = (GameplaySkillsExperienceData) data;
@@ -218,7 +230,7 @@ class ChannelDataHandlerTest {
         // Initialize channel handler for general channel
         ChannelDataHandler<GeneralType> handler = new ChannelDataHandler<>(Channels.GENERAL, GeneralType.class);
 
-        String jsonString = "{\"type\":\"LOGIN_SKILLS\",\"data\":{\"skillType\":\"STRENGTH\",\"level\":85,\"experience\":3258594.0}}";
+        String jsonString = "{\"type\":\"LOGIN_SKILLS\",\"data\":{\"levels\":{\"STRENGTH\":85},\"experiences\":{\"STRENGTH\":3258594.0}}}";
         JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
 
         // Get type and data
@@ -230,8 +242,12 @@ class ChannelDataHandlerTest {
         switch (type) {
         case LOGIN_SKILLS -> {
             LoginSkillsData loginData = (LoginSkillsData) data;
-            output.append("Logged in with ").append(loginData.skillType()).append(" at level ")
-                    .append(loginData.level()).append(" (").append(loginData.experience()).append(" XP)");
+            // Get the first skill for demonstration
+            SkillType firstSkill = loginData.levels().keySet().iterator().next();
+            Integer level = loginData.getLevel(firstSkill);
+            Double experience = loginData.getExperience(firstSkill);
+            output.append("Logged in with ").append(firstSkill).append(" at level ").append(level).append(" (")
+                    .append(experience).append(" XP)");
         }
         case GAMEPLAY_SKILLS_EXPERIENCE -> {
             GameplaySkillsExperienceData expData = (GameplaySkillsExperienceData) data;
