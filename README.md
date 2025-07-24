@@ -75,29 +75,57 @@ For production environments, it's recommended to use specific release tags for s
 import com.minescape.mod.api.channel.ChannelDataHandler;
 import com.minescape.mod.api.channel.Channels;
 import com.minescape.mod.api.channel.general.GeneralType;
+import com.minescape.mod.api.channel.general.skills.GameplaySkillsExperienceData;
+import com.minescape.mod.api.channel.general.skills.LoginSkillsData;
+import com.minescape.mod.api.types.skills.SkillType;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-// Read in on this plugin channel
-String channelName = Channels.GENERAL.getChannelName();
+// Get the channel name
+String channelName = Channels.GENERAL.getChannelName(); // "minescape_server:general"
 
 // Initialize channel handler for general channel
 ChannelDataHandler<GeneralType> handler = new ChannelDataHandler<>(Channels.GENERAL, GeneralType.class);
 
-// Handle incoming JSON data, this will be from your channel handler
-String jsonString = "{\"type\":\"LOGIN_SKILLS\",\"data\":{\"skillType\":\"ATTACK\",\"level\":75,\"experience\":1210421.0}}";
+// Handle incoming JSON data for gameplay skills experience
+String jsonString = "{\"type\":\"GAMEPLAY_SKILLS_EXPERIENCE\",\"data\":{\"skillType\":\"ATTACK\",\"experienceGained\":25.0,\"totalExperience\":1210421.0}}";
 JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
 
 // Parse and handle the data
+GeneralType type = handler.getType(jsonObject);
 Object result = handler.getData(jsonObject);
+
+// Cast to specific type based on the type enum
+if (type == GeneralType.GAMEPLAY_SKILLS_EXPERIENCE) {
+    GameplaySkillsExperienceData expData = (GameplaySkillsExperienceData) result;
+    System.out.println("Gained " + expData.experienceGained() + " XP in " + expData.skillType());
+    System.out.println("Total experience: " + expData.totalExperience());
+}
+
+// Example with LOGIN_SKILLS data
+String loginJsonString = "{\"type\":\"LOGIN_SKILLS\",\"data\":{\"levels\":{\"ATTACK\":75,\"DEFENCE\":60},\"experiences\":{\"ATTACK\":1210421.0,\"DEFENCE\":273742.0}}}";
+JsonObject loginJsonObject = JsonParser.parseString(loginJsonString).getAsJsonObject();
+
+GeneralType loginType = handler.getType(loginJsonObject);
+if (loginType == GeneralType.LOGIN_SKILLS) {
+    LoginSkillsData loginData = (LoginSkillsData) handler.getData(loginJsonObject);
+    System.out.println("Attack level: " + loginData.getLevel(SkillType.ATTACK));
+    System.out.println("Defence level: " + loginData.getLevel(SkillType.DEFENCE));
+}
 ```
 
 ### Skills Experience Tracking
 
 ```java
+import com.minescape.mod.api.channel.ChannelDataHandler;
+import com.minescape.mod.api.channel.Channels;
+import com.minescape.mod.api.channel.general.GeneralType;
 import com.minescape.mod.api.channel.general.skills.LoginSkillsData;
 import com.minescape.mod.api.channel.general.skills.GameplaySkillsExperienceData;
 import com.minescape.mod.api.types.skills.SkillType;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import java.util.Map;
 
 // Initialize channel handler for general channel
 ChannelDataHandler<GeneralType> handler = new ChannelDataHandler<>(Channels.GENERAL, GeneralType.class);
@@ -110,9 +138,9 @@ JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
 GeneralType type = handler.getType(jsonObject);
 Object data = handler.getData(jsonObject);
 
-// Handle different data types using modern switch expression
+// Handle different data types using switch statement
 switch (type) {
-    case LOGIN_SKILLS -> {
+    case LOGIN_SKILLS:
         LoginSkillsData loginData = (LoginSkillsData) data;
         Map<SkillType, Integer> levels = loginData.levels();        // All skill levels
         Map<SkillType, Double> experiences = loginData.experiences(); // All skill experiences
@@ -126,15 +154,26 @@ switch (type) {
             Double exp = experiences.get(skill);
             System.out.println(skill + " level " + level + " with " + exp + " XP");
         });
-    }
-    case GAMEPLAY_SKILLS_EXPERIENCE -> {
+        break;
+
+    case GAMEPLAY_SKILLS_EXPERIENCE:
         GameplaySkillsExperienceData expData = (GameplaySkillsExperienceData) data;
         SkillType skill = expData.skillType();           // Skill type
         double gained = expData.experienceGained();      // Experience gained
         double total = expData.totalExperience();        // Total experience
         System.out.println("Gained " + gained + " XP in " + skill + " (total: " + total + ")");
-    }
+        break;
 }
+
+// Alternative: Type-safe data retrieval
+// If you know the expected type, you can use type-safe casting
+String loginJsonString = "{\"type\":\"LOGIN_SKILLS\",\"data\":{\"levels\":{\"MAGIC\":99,\"COOKING\":85},\"experiences\":{\"MAGIC\":13034431.0,\"COOKING\":3258594.0}}}";
+JsonObject loginJsonObject = JsonParser.parseString(loginJsonString).getAsJsonObject();
+
+// Direct type-safe retrieval
+LoginSkillsData loginSkillsData = handler.getData(loginJsonObject, LoginSkillsData.class);
+System.out.println("Magic level: " + loginSkillsData.getLevel(SkillType.MAGIC));
+System.out.println("Cooking level: " + loginSkillsData.getLevel(SkillType.COOKING));
 ```
 
 ### NeoForge Integration
@@ -146,6 +185,7 @@ import com.minescape.mod.api.channel.ChannelDataHandler;
 import com.minescape.mod.api.channel.Channels;
 import com.minescape.mod.api.channel.general.GeneralType;
 import com.minescape.mod.api.channel.general.skills.LoginSkillsData;
+import com.minescape.mod.api.channel.general.skills.GameplaySkillsExperienceData;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -210,7 +250,7 @@ public class MineScapeAPIExample {
 
             // Handle different data types
             switch (type) {
-                case LOGIN_SKILLS -> {
+                case LOGIN_SKILLS:
                     LoginSkillsData loginData = (LoginSkillsData) data;
                     System.out.println("Received login skills data with " + loginData.levels().size() + " skills");
 
@@ -219,10 +259,13 @@ public class MineScapeAPIExample {
                         Double experience = loginData.getExperience(skill);
                         System.out.println(skill + ": Level " + level + " (" + experience + " XP)");
                     });
-                }
-                case GAMEPLAY_SKILLS_EXPERIENCE -> {
-                    // Handle other packet types...
-                }
+                    break;
+
+                case GAMEPLAY_SKILLS_EXPERIENCE:
+                    GameplaySkillsExperienceData expData = (GameplaySkillsExperienceData) data;
+                    System.out.println("Gained " + expData.experienceGained() + " XP in " + expData.skillType() +
+                                     " (total: " + expData.totalExperience() + ")");
+                    break;
             }
         } catch (Exception e) {
             System.err.println("Failed to process MineScape packet: " + e.getMessage());
