@@ -35,6 +35,39 @@ dependencies {
 }
 ```
 
+### For NeoForge Projects
+
+For NeoForge mod development, add the following to your `build.gradle` file to properly handle the API at runtime:
+
+```gradle
+repositories {
+    mavenCentral()
+    maven {
+        url 'https://jitpack.io'
+    }
+}
+
+jarJar.enabled(true)
+
+tasks.named('jarJar') {
+
+}
+
+dependencies {
+    implementation 'com.github.AshleyThew:minescape-mod-api:v1.0.2'
+    jarJar(group: 'com.github.AshleyThew', name: 'minescape-mod-api', version: '[v1.0.2]')
+    jarJar(implementation("com.github.AshleyThew:minescape-mod-api")) {
+        version {
+            strictly '[v1.0.2,)'
+            prefer 'v1.0.2'
+        }
+    }
+    additionalRuntimeClasspath("com.github.AshleyThew:minescape-mod-api:v1.0.2")
+}
+```
+
+The `jarJar` configuration ensures that the MineScape API is properly included in your mod's JAR file for distribution, while `additionalRuntimeClasspath` provides the dependency during development and testing.
+
 ### For Maven Projects
 
 Add the following to your `pom.xml` file:
