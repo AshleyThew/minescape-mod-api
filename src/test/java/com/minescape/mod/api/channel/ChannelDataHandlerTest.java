@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.minescape.mod.api.channel.general.skills.LoginSkillsData;
 import com.minescape.mod.api.channel.general.skills.GameplaySkillsExperienceData;
+import com.minescape.mod.api.channel.general.skills.GameplaySkillEffectData;
 import com.minescape.mod.api.channel.general.GeneralType;
 import com.minescape.mod.api.types.skills.SkillType;
 import org.junit.jupiter.api.Test;
@@ -123,6 +124,46 @@ class ChannelDataHandlerTest {
     }
 
     @Test
+    void testHandleGeneralChannelSkillEffect() {
+        // Test JSON string for skill effect data
+        String jsonString = "{\"type\":\"GAMEPLAY_SKILL_EFFECT\",\"data\":{\"skillType\":\"STRENGTH\",\"previousModifier\":0,\"newModifier\":3,\"skillLevel\":75}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        // Handle the data
+        Object result = generalHandler.getData(jsonObject);
+
+        // Verify the result
+        assertTrue(result instanceof GameplaySkillEffectData);
+        GameplaySkillEffectData skillEffectData = (GameplaySkillEffectData) result;
+
+        assertEquals(SkillType.STRENGTH, skillEffectData.skillType());
+        assertEquals(0, skillEffectData.previousModifier());
+        assertEquals(3, skillEffectData.newModifier());
+        assertEquals(75, skillEffectData.skillLevel());
+        assertEquals(75, skillEffectData.previousEffectiveLevel());
+        assertEquals(78, skillEffectData.newEffectiveLevel());
+        assertEquals(3, skillEffectData.modifierChange());
+    }
+
+    @Test
+    void testHandleSkillEffectWithTypeSafeCasting() {
+        String jsonString = "{\"type\":\"GAMEPLAY_SKILL_EFFECT\",\"data\":{\"skillType\":\"HITPOINTS\",\"previousModifier\":5,\"newModifier\":-2,\"skillLevel\":99}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        // Use type-safe method
+        GameplaySkillEffectData result = generalHandler.getData(jsonObject, GameplaySkillEffectData.class);
+
+        assertNotNull(result);
+        assertEquals(SkillType.HITPOINTS, result.skillType());
+        assertEquals(5, result.previousModifier());
+        assertEquals(-2, result.newModifier());
+        assertEquals(99, result.skillLevel());
+        assertEquals(104, result.previousEffectiveLevel());
+        assertEquals(97, result.newEffectiveLevel());
+        assertEquals(-7, result.modifierChange());
+    }
+
+    @Test
     void testGetTypeLoginSkills() {
         String jsonString = "{\"type\":\"LOGIN_SKILLS\",\"data\":{\"levels\":{\"ATTACK\":75},\"experiences\":{\"ATTACK\":1210421.0}}}";
         JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
@@ -140,6 +181,16 @@ class ChannelDataHandlerTest {
         GeneralType type = generalHandler.getType(jsonObject);
 
         assertEquals(GeneralType.GAMEPLAY_SKILLS_EXPERIENCE, type);
+    }
+
+    @Test
+    void testGetTypeSkillEffect() {
+        String jsonString = "{\"type\":\"GAMEPLAY_SKILL_EFFECT\",\"data\":{\"skillType\":\"ATTACK\",\"previousModifier\":0,\"newModifier\":5,\"skillLevel\":80}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        GeneralType type = generalHandler.getType(jsonObject);
+
+        assertEquals(GeneralType.GAMEPLAY_SKILL_EFFECT, type);
     }
 
     @Test
@@ -185,6 +236,10 @@ class ChannelDataHandlerTest {
             GameplaySkillsExperienceData expData = (GameplaySkillsExperienceData) data;
             yield "Experience: " + expData.experienceGained() + " in " + expData.skillType();
         }
+        case GAMEPLAY_SKILL_EFFECT -> {
+            GameplaySkillEffectData effectData = (GameplaySkillEffectData) data;
+            yield "Effect: " + effectData.skillType() + " modifier changed from " + effectData.previousModifier() + " to " + effectData.newModifier();
+        }
         };
 
         assertEquals("Login: DEFENCE level 60", result);
@@ -212,6 +267,11 @@ class ChannelDataHandlerTest {
             GameplaySkillsExperienceData expData = (GameplaySkillsExperienceData) data;
             yield Map.of("type", "experience", "skill", expData.skillType().toString(), "gained",
                     expData.experienceGained(), "total", expData.totalExperience());
+        }
+        case GAMEPLAY_SKILL_EFFECT -> {
+            GameplaySkillEffectData effectData = (GameplaySkillEffectData) data;
+            yield Map.of("type", "effect", "skill", effectData.skillType().toString(), "previousModifier",
+                    effectData.previousModifier(), "newModifier", effectData.newModifier(), "change", effectData.modifierChange());
         }
         };
 
@@ -253,6 +313,12 @@ class ChannelDataHandlerTest {
             GameplaySkillsExperienceData expData = (GameplaySkillsExperienceData) data;
             output.append("Gained ").append(expData.experienceGained()).append(" XP in ").append(expData.skillType())
                     .append(" (total: ").append(expData.totalExperience()).append(")");
+        }
+        case GAMEPLAY_SKILL_EFFECT -> {
+            GameplaySkillEffectData effectData = (GameplaySkillEffectData) data;
+            output.append("Applied effect to ").append(effectData.skillType()).append(": ")
+                    .append(effectData.previousEffectiveLevel()).append(" -> ").append(effectData.newEffectiveLevel())
+                    .append(" (modifier: ").append(effectData.newModifier()).append(")");
         }
         }
 
