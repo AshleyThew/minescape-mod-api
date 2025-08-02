@@ -3,6 +3,7 @@ package com.minescape.mod.api.channel;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.minescape.mod.api.channel.general.skills.LoginSkillsData;
+import com.minescape.mod.api.channel.general.skills.LoginSkillEffectData;
 import com.minescape.mod.api.channel.general.skills.GameplaySkillsExperienceData;
 import com.minescape.mod.api.channel.general.skills.GameplaySkillEffectData;
 import com.minescape.mod.api.channel.general.GeneralType;
@@ -164,6 +165,83 @@ class ChannelDataHandlerTest {
     }
 
     @Test
+    void testHandleGeneralChannelLoginSkillEffects() {
+        // Test JSON string with multiple skill effects
+        String jsonString = "{\"type\":\"LOGIN_SKILL_EFFECTS\",\"data\":{\"modifiers\":{\"ATTACK\":3,\"STRENGTH\":-2,\"HITPOINTS\":5}}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        // Handle the data
+        Object result = generalHandler.getData(jsonObject);
+
+        // Verify the result
+        assertTrue(result instanceof LoginSkillEffectData);
+        LoginSkillEffectData loginSkillEffectData = (LoginSkillEffectData) result;
+
+        // Test the modifiers
+        assertEquals(Integer.valueOf(3), loginSkillEffectData.getModifier(SkillType.ATTACK));
+        assertEquals(Integer.valueOf(-2), loginSkillEffectData.getModifier(SkillType.STRENGTH));
+        assertEquals(Integer.valueOf(5), loginSkillEffectData.getModifier(SkillType.HITPOINTS));
+
+        // Test accessing via map
+        assertEquals(3, loginSkillEffectData.modifiers().size());
+        assertTrue(loginSkillEffectData.hasEffect(SkillType.ATTACK));
+        assertTrue(loginSkillEffectData.hasEffect(SkillType.STRENGTH));
+        assertTrue(loginSkillEffectData.hasEffect(SkillType.HITPOINTS));
+        assertTrue(loginSkillEffectData.hasAnyEffect());
+    }
+
+    @Test
+    void testHandleLoginSkillEffectsWithTypeSafeCasting() {
+        String jsonString = "{\"type\":\"LOGIN_SKILL_EFFECTS\",\"data\":{\"modifiers\":{\"MAGIC\":4,\"DEFENCE\":-1}}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        // Use type-safe method
+        LoginSkillEffectData result = generalHandler.getData(jsonObject, LoginSkillEffectData.class);
+
+        assertNotNull(result);
+        assertEquals(Integer.valueOf(4), result.getModifier(SkillType.MAGIC));
+        assertEquals(Integer.valueOf(-1), result.getModifier(SkillType.DEFENCE));
+        assertNull(result.getModifier(SkillType.COOKING)); // Not present in data
+        
+        // Test utility methods
+        assertTrue(result.hasEffect(SkillType.MAGIC));
+        assertTrue(result.hasEffect(SkillType.DEFENCE));
+        assertFalse(result.hasEffect(SkillType.COOKING));
+        assertTrue(result.hasAnyEffect());
+    }
+
+    @Test
+    void testLoginSkillEffectsEmpty() {
+        String jsonString = "{\"type\":\"LOGIN_SKILL_EFFECTS\",\"data\":{\"modifiers\":{}}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        LoginSkillEffectData result = generalHandler.getData(jsonObject, LoginSkillEffectData.class);
+
+        assertNotNull(result);
+        assertEquals(0, result.modifiers().size());
+        assertFalse(result.hasAnyEffect());
+        assertFalse(result.hasEffect(SkillType.ATTACK));
+        assertNull(result.getModifier(SkillType.ATTACK));
+    }
+
+    @Test
+    void testLoginSkillEffectsWithZeroModifiers() {
+        String jsonString = "{\"type\":\"LOGIN_SKILL_EFFECTS\",\"data\":{\"modifiers\":{\"ATTACK\":0,\"STRENGTH\":5}}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        LoginSkillEffectData result = generalHandler.getData(jsonObject, LoginSkillEffectData.class);
+
+        assertNotNull(result);
+        assertEquals(Integer.valueOf(0), result.getModifier(SkillType.ATTACK));
+        assertEquals(Integer.valueOf(5), result.getModifier(SkillType.STRENGTH));
+        
+        // Zero modifier should not count as having an effect
+        assertFalse(result.hasEffect(SkillType.ATTACK));
+        assertTrue(result.hasEffect(SkillType.STRENGTH));
+        assertTrue(result.hasAnyEffect());
+    }
+
+    @Test
     void testGetTypeLoginSkills() {
         String jsonString = "{\"type\":\"LOGIN_SKILLS\",\"data\":{\"levels\":{\"ATTACK\":75},\"experiences\":{\"ATTACK\":1210421.0}}}";
         JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
@@ -171,6 +249,16 @@ class ChannelDataHandlerTest {
         GeneralType type = generalHandler.getType(jsonObject);
 
         assertEquals(GeneralType.LOGIN_SKILLS, type);
+    }
+
+    @Test
+    void testGetTypeLoginSkillEffects() {
+        String jsonString = "{\"type\":\"LOGIN_SKILL_EFFECTS\",\"data\":{\"modifiers\":{\"ATTACK\":3,\"STRENGTH\":-2}}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        GeneralType type = generalHandler.getType(jsonObject);
+
+        assertEquals(GeneralType.LOGIN_SKILL_EFFECTS, type);
     }
 
     @Test
@@ -232,6 +320,13 @@ class ChannelDataHandlerTest {
             Integer level = loginData.getLevel(firstSkill);
             yield "Login: " + firstSkill + " level " + level;
         }
+        case LOGIN_SKILL_EFFECTS -> {
+            LoginSkillEffectData effectsData = (LoginSkillEffectData) data;
+            // Get the first skill with effects for demonstration
+            SkillType firstSkill = effectsData.modifiers().keySet().iterator().next();
+            Integer modifier = effectsData.getModifier(firstSkill);
+            yield "Login effects: " + firstSkill + " modifier " + modifier;
+        }
         case GAMEPLAY_SKILLS_EXPERIENCE -> {
             GameplaySkillsExperienceData expData = (GameplaySkillsExperienceData) data;
             yield "Experience: " + expData.experienceGained() + " in " + expData.skillType();
@@ -262,6 +357,11 @@ class ChannelDataHandlerTest {
             // For demonstration, get info about all skills
             yield Map.of("type", "login", "skillCount", loginData.levels().size(), "levels", loginData.levels(),
                     "experiences", loginData.experiences());
+        }
+        case LOGIN_SKILL_EFFECTS -> {
+            LoginSkillEffectData effectsData = (LoginSkillEffectData) data;
+            yield Map.of("type", "loginEffects", "modifierCount", effectsData.modifiers().size(), 
+                    "modifiers", effectsData.modifiers());
         }
         case GAMEPLAY_SKILLS_EXPERIENCE -> {
             GameplaySkillsExperienceData expData = (GameplaySkillsExperienceData) data;
@@ -309,6 +409,13 @@ class ChannelDataHandlerTest {
             output.append("Logged in with ").append(firstSkill).append(" at level ").append(level).append(" (")
                     .append(experience).append(" XP)");
         }
+        case LOGIN_SKILL_EFFECTS -> {
+            LoginSkillEffectData effectsData = (LoginSkillEffectData) data;
+            // Get the first skill with effects for demonstration
+            SkillType firstSkill = effectsData.modifiers().keySet().iterator().next();
+            Integer modifier = effectsData.getModifier(firstSkill);
+            output.append("Logged in with ").append(firstSkill).append(" effect modifier ").append(modifier);
+        }
         case GAMEPLAY_SKILLS_EXPERIENCE -> {
             GameplaySkillsExperienceData expData = (GameplaySkillsExperienceData) data;
             output.append("Gained ").append(expData.experienceGained()).append(" XP in ").append(expData.skillType())
@@ -323,5 +430,86 @@ class ChannelDataHandlerTest {
         }
 
         assertEquals("Logged in with STRENGTH at level 85 (3258594.0 XP)", output.toString());
+    }
+
+    @Test
+    void testSwitchExpressionWithLoginSkillEffects() {
+        String jsonString = "{\"type\":\"LOGIN_SKILL_EFFECTS\",\"data\":{\"modifiers\":{\"DEFENCE\":2,\"HITPOINTS\":-3}}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        // Get type and data
+        GeneralType type = generalHandler.getType(jsonObject);
+        Object data = generalHandler.getData(jsonObject);
+
+        // Test switch expression pattern
+        String result = switch (type) {
+        case LOGIN_SKILLS -> {
+            LoginSkillsData loginData = (LoginSkillsData) data;
+            SkillType firstSkill = loginData.levels().keySet().iterator().next();
+            Integer level = loginData.getLevel(firstSkill);
+            yield "Login: " + firstSkill + " level " + level;
+        }
+        case LOGIN_SKILL_EFFECTS -> {
+            LoginSkillEffectData effectsData = (LoginSkillEffectData) data;
+            // Get the first skill with effects for demonstration
+            SkillType firstSkill = effectsData.modifiers().keySet().iterator().next();
+            Integer modifier = effectsData.getModifier(firstSkill);
+            yield "Login effects: " + firstSkill + " modifier " + modifier;
+        }
+        case GAMEPLAY_SKILLS_EXPERIENCE -> {
+            GameplaySkillsExperienceData expData = (GameplaySkillsExperienceData) data;
+            yield "Experience: " + expData.experienceGained() + " in " + expData.skillType();
+        }
+        case GAMEPLAY_SKILL_EFFECT -> {
+            GameplaySkillEffectData effectData = (GameplaySkillEffectData) data;
+            yield "Effect: " + effectData.skillType() + " modifier changed from " + effectData.previousModifier() + " to " + effectData.newModifier();
+        }
+        };
+
+        // The result should contain one of the skills (DEFENCE or HITPOINTS) with its modifier
+        assertTrue(result.startsWith("Login effects:"));
+        assertTrue(result.contains("DEFENCE modifier 2") || result.contains("HITPOINTS modifier -3"));
+    }
+
+    @Test
+    void testSwitchStatementWithLoginSkillEffects() {
+        String jsonString = "{\"type\":\"LOGIN_SKILL_EFFECTS\",\"data\":{\"modifiers\":{\"ATTACK\":4}}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        // Get type and data
+        GeneralType type = generalHandler.getType(jsonObject);
+        Object data = generalHandler.getData(jsonObject);
+
+        // Test switch statement for data processing
+        StringBuilder output = new StringBuilder();
+        switch (type) {
+        case LOGIN_SKILLS -> {
+            LoginSkillsData loginData = (LoginSkillsData) data;
+            SkillType firstSkill = loginData.levels().keySet().iterator().next();
+            Integer level = loginData.getLevel(firstSkill);
+            Double experience = loginData.getExperience(firstSkill);
+            output.append("Logged in with ").append(firstSkill).append(" at level ").append(level).append(" (")
+                    .append(experience).append(" XP)");
+        }
+        case LOGIN_SKILL_EFFECTS -> {
+            LoginSkillEffectData effectsData = (LoginSkillEffectData) data;
+            SkillType firstSkill = effectsData.modifiers().keySet().iterator().next();
+            Integer modifier = effectsData.getModifier(firstSkill);
+            output.append("Logged in with ").append(firstSkill).append(" effect modifier ").append(modifier);
+        }
+        case GAMEPLAY_SKILLS_EXPERIENCE -> {
+            GameplaySkillsExperienceData expData = (GameplaySkillsExperienceData) data;
+            output.append("Gained ").append(expData.experienceGained()).append(" XP in ").append(expData.skillType())
+                    .append(" (total: ").append(expData.totalExperience()).append(")");
+        }
+        case GAMEPLAY_SKILL_EFFECT -> {
+            GameplaySkillEffectData effectData = (GameplaySkillEffectData) data;
+            output.append("Applied effect to ").append(effectData.skillType()).append(": ")
+                    .append(effectData.previousEffectiveLevel()).append(" -> ").append(effectData.newEffectiveLevel())
+                    .append(" (modifier: ").append(effectData.newModifier()).append(")");
+        }
+        }
+
+        assertEquals("Logged in with ATTACK effect modifier 4", output.toString());
     }
 }

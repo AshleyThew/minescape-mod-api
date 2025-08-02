@@ -3,6 +3,7 @@ package com.minescape.mod.api.channel.general;
 import java.util.function.Supplier;
 
 import com.minescape.mod.api.channel.general.skills.LoginSkillsData;
+import com.minescape.mod.api.channel.general.skills.LoginSkillEffectData;
 import com.minescape.mod.api.channel.general.skills.GameplaySkillsExperienceData;
 import com.minescape.mod.api.channel.general.skills.GameplaySkillEffectData;
 
@@ -15,6 +16,10 @@ public enum GeneralType implements Supplier<Class<?>> {
      * Data type for login skills information.
      */
     LOGIN_SKILLS(LoginSkillsData.class),
+    /**
+     * Data type for login skill effect information (modifiers and timers).
+     */
+    LOGIN_SKILL_EFFECTS(LoginSkillEffectData.class),
     /**
      * Data type for gameplay skills experience information.
      */
