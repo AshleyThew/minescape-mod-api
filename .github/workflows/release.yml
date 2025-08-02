@@ -95,6 +95,36 @@ jobs:
         if: steps.check_tag.outputs.SHOULD_RELEASE == 'true'
         run: ./gradlew jar sourcesJar javadocJar
 
+      - name: Generate changelog
+        if: steps.check_tag.outputs.SHOULD_RELEASE == 'true'
+        id: changelog
+        run: |
+          # Get the previous tag
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || git rev-list --max-parents=0 HEAD)
+
+          # Generate changelog
+          if [ "$PREVIOUS_TAG" = "$(git rev-list --max-parents=0 HEAD)" ]; then
+            # If this is the first tag, show all commits
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
+          else
+            # Show commits since the previous tag
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges ${PREVIOUS_TAG}..HEAD)
+          fi
+
+          # Handle empty changelog
+          if [ -z "$CHANGELOG" ]; then
+            CHANGELOG="- No changes since last release"
+          fi
+
+          # Save changelog to output (escape newlines for GitHub Actions)
+          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          echo "Previous tag: $PREVIOUS_TAG"
+          echo "Generated changelog:"
+          echo "$CHANGELOG"
+
       - name: Create Release
         if: steps.check_tag.outputs.SHOULD_RELEASE == 'true'
         uses: softprops/action-gh-release@v2
@@ -104,15 +134,34 @@ jobs:
           body: |
             ## Changes in ${{ steps.check_tag.outputs.TAG_NAME }}
 
-            Please see the [CHANGELOG](https://github.com/AshleyThew/minescape-mod-api/blob/main/CHANGELOG.md) for detailed information about changes in this release.
+            ${{ steps.changelog.outputs.CHANGELOG }}
 
             ### Artifacts
             - `minescape-mod-api-*.jar` - Main library JAR
             - `minescape-mod-api-*-sources.jar` - Sources JAR
             - `minescape-mod-api-*-javadoc.jar` - Javadoc JAR
+
+            ### JitPack
+            This release is available on JitPack at:
+            ```
+            repositories {
+                maven { url 'https://jitpack.io' }
+            }
+            dependencies {
+                implementation 'com.github.AshleyThew:minescape-mod-api:${{ steps.check_tag.outputs.TAG_NAME }}'
+            }
+            ```
           files: |
             ./build/libs/minescape-mod-api-${{ steps.project_version.outputs.VERSION }}.jar
             ./build/libs/minescape-mod-api-${{ steps.project_version.outputs.VERSION }}-sources.jar
             ./build/libs/minescape-mod-api-${{ steps.project_version.outputs.VERSION }}-javadoc.jar
           draft: false
           prerelease: false
+
+      - name: Trigger JitPack build
+        if: steps.check_tag.outputs.SHOULD_RELEASE == 'true'
+        run: |
+          echo "Triggering JitPack build for tag ${{ steps.check_tag.outputs.TAG_NAME }}"
+          curl -s "https://jitpack.io/api/builds/com.github.AshleyThew/minescape-mod-api/${{ steps.check_tag.outputs.TAG_NAME }}" || true
+          echo "JitPack build triggered. It may take a few minutes to complete."
+          echo "Check build status at: https://jitpack.io/com/github/AshleyThew/minescape-mod-api/${{ steps.check_tag.outputs.TAG_NAME }}"
