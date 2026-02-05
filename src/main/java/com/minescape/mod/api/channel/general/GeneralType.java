@@ -6,6 +6,7 @@ import com.minescape.mod.api.channel.general.skills.LoginSkillsData;
 import com.minescape.mod.api.channel.general.skills.LoginSkillEffectData;
 import com.minescape.mod.api.channel.general.skills.GameplaySkillsExperienceData;
 import com.minescape.mod.api.channel.general.skills.GameplaySkillEffectData;
+import com.minescape.mod.api.channel.general.target.TargetData;
 
 /**
  * Enum representing different types of data that can be sent through the
@@ -27,7 +28,11 @@ public enum GeneralType implements Supplier<Class<?>> {
     /**
      * Data type for gameplay skill effect changes (modifiers from potions, spells, etc.).
      */
-    GAMEPLAY_SKILL_EFFECT(GameplaySkillEffectData.class),;
+    GAMEPLAY_SKILL_EFFECT(GameplaySkillEffectData.class),
+    /**
+     * Data type for the player's current target mob.
+     */
+    TARGET(TargetData.class),;
 
     private final Class<?> dataClass;
 
