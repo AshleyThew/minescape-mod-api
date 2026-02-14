@@ -6,7 +6,8 @@ import com.minescape.mod.api.channel.general.skills.LoginSkillsData;
 import com.minescape.mod.api.channel.general.skills.LoginSkillEffectData;
 import com.minescape.mod.api.channel.general.skills.GameplaySkillsExperienceData;
 import com.minescape.mod.api.channel.general.skills.GameplaySkillEffectData;
-import com.minescape.mod.api.channel.general.target.TargetData;
+import com.minescape.mod.api.channel.general.target.PlayerTargetData;
+import com.minescape.mod.api.channel.general.target.PlayerTargetDeathData;
 import com.minescape.mod.api.channel.general.GeneralType;
 import com.minescape.mod.api.types.skills.SkillType;
 import org.junit.jupiter.api.Test;
@@ -322,25 +323,7 @@ class ChannelDataHandlerTest {
             Integer level = loginData.getLevel(firstSkill);
             yield "Login: " + firstSkill + " level " + level;
         }
-        case LOGIN_SKILL_EFFECTS -> {
-            LoginSkillEffectData effectsData = (LoginSkillEffectData) data;
-            // Get the first skill with effects for demonstration
-            SkillType firstSkill = effectsData.modifiers().keySet().iterator().next();
-            Integer modifier = effectsData.getModifier(firstSkill);
-            yield "Login effects: " + firstSkill + " modifier " + modifier;
-        }
-        case GAMEPLAY_SKILLS_EXPERIENCE -> {
-            GameplaySkillsExperienceData expData = (GameplaySkillsExperienceData) data;
-            yield "Experience: " + expData.experienceGained() + " in " + expData.skillType();
-        }
-        case GAMEPLAY_SKILL_EFFECT -> {
-            GameplaySkillEffectData effectData = (GameplaySkillEffectData) data;
-            yield "Effect: " + effectData.skillType() + " modifier changed from " + effectData.previousModifier() + " to " + effectData.newModifier();
-        }
-        case TARGET -> {
-            TargetData targetData = (TargetData) data;
-            yield "Target: " + targetData.uuid() + " HP: " + targetData.currentHp() + "/" + targetData.totalHp();
-        }
+        default -> throw new IllegalArgumentException("Unexpected type: " + type);
         };
 
         assertEquals("Login: DEFENCE level 60", result);
@@ -358,31 +341,12 @@ class ChannelDataHandlerTest {
 
         // Test switch expression with Map return type
         Object processedData = switch (type) {
-        case LOGIN_SKILLS -> {
-            LoginSkillsData loginData = (LoginSkillsData) data;
-            // For demonstration, get info about all skills
-            yield Map.of("type", "login", "skillCount", loginData.levels().size(), "levels", loginData.levels(),
-                    "experiences", loginData.experiences());
-        }
-        case LOGIN_SKILL_EFFECTS -> {
-            LoginSkillEffectData effectsData = (LoginSkillEffectData) data;
-            yield Map.of("type", "loginEffects", "modifierCount", effectsData.modifiers().size(), 
-                    "modifiers", effectsData.modifiers());
-        }
         case GAMEPLAY_SKILLS_EXPERIENCE -> {
             GameplaySkillsExperienceData expData = (GameplaySkillsExperienceData) data;
             yield Map.of("type", "experience", "skill", expData.skillType().toString(), "gained",
                     expData.experienceGained(), "total", expData.totalExperience());
         }
-        case GAMEPLAY_SKILL_EFFECT -> {
-            GameplaySkillEffectData effectData = (GameplaySkillEffectData) data;
-            yield Map.of("type", "effect", "skill", effectData.skillType().toString(), "previousModifier",
-                    effectData.previousModifier(), "newModifier", effectData.newModifier(), "change", effectData.modifierChange());
-        }
-        case TARGET -> {
-            TargetData targetData = (TargetData) data;
-            yield Map.of("type", "target", "uuid", targetData.uuid().toString(), "currentHp", targetData.currentHp(), "totalHp", targetData.totalHp());
-        }
+        default -> throw new IllegalArgumentException("Unexpected type: " + type);
         };
 
         assertTrue(processedData instanceof Map);
@@ -419,29 +383,7 @@ class ChannelDataHandlerTest {
             output.append("Logged in with ").append(firstSkill).append(" at level ").append(level).append(" (")
                     .append(experience).append(" XP)");
         }
-        case LOGIN_SKILL_EFFECTS -> {
-            LoginSkillEffectData effectsData = (LoginSkillEffectData) data;
-            // Get the first skill with effects for demonstration
-            SkillType firstSkill = effectsData.modifiers().keySet().iterator().next();
-            Integer modifier = effectsData.getModifier(firstSkill);
-            output.append("Logged in with ").append(firstSkill).append(" effect modifier ").append(modifier);
-        }
-        case GAMEPLAY_SKILLS_EXPERIENCE -> {
-            GameplaySkillsExperienceData expData = (GameplaySkillsExperienceData) data;
-            output.append("Gained ").append(expData.experienceGained()).append(" XP in ").append(expData.skillType())
-                    .append(" (total: ").append(expData.totalExperience()).append(")");
-        }
-        case GAMEPLAY_SKILL_EFFECT -> {
-            GameplaySkillEffectData effectData = (GameplaySkillEffectData) data;
-            output.append("Applied effect to ").append(effectData.skillType()).append(": ")
-                    .append(effectData.previousEffectiveLevel()).append(" -> ").append(effectData.newEffectiveLevel())
-                    .append(" (modifier: ").append(effectData.newModifier()).append(")");
-        }
-        case TARGET -> {
-            TargetData targetData = (TargetData) data;
-            output.append("Target: ").append(targetData.uuid()).append(" HP: ")
-                    .append(targetData.currentHp()).append("/").append(targetData.totalHp());
-        }
+        default -> throw new IllegalArgumentException("Unexpected type: " + type);
         }
 
         assertEquals("Logged in with STRENGTH at level 85 (3258594.0 XP)", output.toString());
@@ -458,12 +400,6 @@ class ChannelDataHandlerTest {
 
         // Test switch expression pattern
         String result = switch (type) {
-        case LOGIN_SKILLS -> {
-            LoginSkillsData loginData = (LoginSkillsData) data;
-            SkillType firstSkill = loginData.levels().keySet().iterator().next();
-            Integer level = loginData.getLevel(firstSkill);
-            yield "Login: " + firstSkill + " level " + level;
-        }
         case LOGIN_SKILL_EFFECTS -> {
             LoginSkillEffectData effectsData = (LoginSkillEffectData) data;
             // Get the first skill with effects for demonstration
@@ -471,18 +407,7 @@ class ChannelDataHandlerTest {
             Integer modifier = effectsData.getModifier(firstSkill);
             yield "Login effects: " + firstSkill + " modifier " + modifier;
         }
-        case GAMEPLAY_SKILLS_EXPERIENCE -> {
-            GameplaySkillsExperienceData expData = (GameplaySkillsExperienceData) data;
-            yield "Experience: " + expData.experienceGained() + " in " + expData.skillType();
-        }
-        case GAMEPLAY_SKILL_EFFECT -> {
-            GameplaySkillEffectData effectData = (GameplaySkillEffectData) data;
-            yield "Effect: " + effectData.skillType() + " modifier changed from " + effectData.previousModifier() + " to " + effectData.newModifier();
-        }
-        case TARGET -> {
-            TargetData targetData = (TargetData) data;
-            yield "Target: " + targetData.uuid() + " HP: " + targetData.currentHp() + "/" + targetData.totalHp();
-        }
+        default -> throw new IllegalArgumentException("Unexpected type: " + type);
         };
 
         // The result should contain one of the skills (DEFENCE or HITPOINTS) with its modifier
@@ -502,36 +427,13 @@ class ChannelDataHandlerTest {
         // Test switch statement for data processing
         StringBuilder output = new StringBuilder();
         switch (type) {
-        case LOGIN_SKILLS -> {
-            LoginSkillsData loginData = (LoginSkillsData) data;
-            SkillType firstSkill = loginData.levels().keySet().iterator().next();
-            Integer level = loginData.getLevel(firstSkill);
-            Double experience = loginData.getExperience(firstSkill);
-            output.append("Logged in with ").append(firstSkill).append(" at level ").append(level).append(" (")
-                    .append(experience).append(" XP)");
-        }
         case LOGIN_SKILL_EFFECTS -> {
             LoginSkillEffectData effectsData = (LoginSkillEffectData) data;
             SkillType firstSkill = effectsData.modifiers().keySet().iterator().next();
             Integer modifier = effectsData.getModifier(firstSkill);
             output.append("Logged in with ").append(firstSkill).append(" effect modifier ").append(modifier);
         }
-        case GAMEPLAY_SKILLS_EXPERIENCE -> {
-            GameplaySkillsExperienceData expData = (GameplaySkillsExperienceData) data;
-            output.append("Gained ").append(expData.experienceGained()).append(" XP in ").append(expData.skillType())
-                    .append(" (total: ").append(expData.totalExperience()).append(")");
-        }
-        case GAMEPLAY_SKILL_EFFECT -> {
-            GameplaySkillEffectData effectData = (GameplaySkillEffectData) data;
-            output.append("Applied effect to ").append(effectData.skillType()).append(": ")
-                    .append(effectData.previousEffectiveLevel()).append(" -> ").append(effectData.newEffectiveLevel())
-                    .append(" (modifier: ").append(effectData.newModifier()).append(")");
-        }
-        case TARGET -> {
-            TargetData targetData = (TargetData) data;
-            output.append("Target: ").append(targetData.uuid()).append(" HP: ")
-                    .append(targetData.currentHp()).append("/").append(targetData.totalHp());
-        }
+        default -> throw new IllegalArgumentException("Unexpected type: " + type);
         }
 
         assertEquals("Logged in with ATTACK effect modifier 4", output.toString());
@@ -540,28 +442,28 @@ class ChannelDataHandlerTest {
     @Test
     void testHandleTargetData() {
         // Test JSON string for target data
-        String jsonString = "{\"type\":\"TARGET\",\"data\":{\"uuid\":\"123e4567-e89b-12d3-a456-426614174000\",\"currentHp\":75,\"totalHp\":100}}";
+        String jsonString = "{\"type\":\"PLAYER_TARGET\",\"data\":{\"uuid\":\"123e4567-e89b-12d3-a456-426614174000\",\"currentHp\":75,\"totalHp\":100}}";
         JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
 
         // Handle the data
         Object result = generalHandler.getData(jsonObject);
 
         // Verify the result
-        assertTrue(result instanceof TargetData);
-        TargetData targetData = (TargetData) result;
+        assertTrue(result instanceof PlayerTargetData);
+        PlayerTargetData playerTargetData = (PlayerTargetData) result;
 
-        assertEquals(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"), targetData.uuid());
-        assertEquals(75, targetData.currentHp());
-        assertEquals(100, targetData.totalHp());
+        assertEquals(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"), playerTargetData.uuid());
+        assertEquals(75, playerTargetData.currentHp());
+        assertEquals(100, playerTargetData.totalHp());
     }
 
     @Test
     void testHandleTargetDataWithTypeSafeCasting() {
-        String jsonString = "{\"type\":\"TARGET\",\"data\":{\"uuid\":\"123e4567-e89b-12d3-a456-426614174000\",\"currentHp\":50,\"totalHp\":150}}";
+        String jsonString = "{\"type\":\"PLAYER_TARGET\",\"data\":{\"uuid\":\"123e4567-e89b-12d3-a456-426614174000\",\"currentHp\":50,\"totalHp\":150}}";
         JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
 
         // Use type-safe method
-        TargetData result = generalHandler.getData(jsonObject, TargetData.class);
+        PlayerTargetData result = generalHandler.getData(jsonObject, PlayerTargetData.class);
 
         assertNotNull(result);
         assertEquals(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"), result.uuid());
@@ -572,35 +474,35 @@ class ChannelDataHandlerTest {
     @Test
     void testHandleGeneralChannelWithTargetData() {
         // Test JSON string with target data
-        String jsonString = "{\"type\":\"TARGET\",\"data\":{\"uuid\":\"123e4567-e89b-12d3-a456-426614174000\",\"currentHp\":200,\"totalHp\":300}}";
+        String jsonString = "{\"type\":\"PLAYER_TARGET\",\"data\":{\"uuid\":\"123e4567-e89b-12d3-a456-426614174000\",\"currentHp\":200,\"totalHp\":300}}";
         JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
 
         // Handle the data
         Object result = generalHandler.getData(jsonObject);
 
         // Verify the result
-        assertTrue(result instanceof TargetData);
-        TargetData targetData = (TargetData) result;
+        assertTrue(result instanceof PlayerTargetData);
+        PlayerTargetData playerTargetData = (PlayerTargetData) result;
 
-        assertEquals(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"), targetData.uuid());
-        assertEquals(200, targetData.currentHp());
-        assertEquals(300, targetData.totalHp());
+        assertEquals(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"), playerTargetData.uuid());
+        assertEquals(200, playerTargetData.currentHp());
+        assertEquals(300, playerTargetData.totalHp());
     }
 
     @Test
     void testGetTypeTarget() {
-        String jsonString = "{\"type\":\"TARGET\",\"data\":{\"uuid\":\"123e4567-e89b-12d3-a456-426614174000\",\"currentHp\":100,\"totalHp\":200}}";
+        String jsonString = "{\"type\":\"PLAYER_TARGET\",\"data\":{\"uuid\":\"123e4567-e89b-12d3-a456-426614174000\",\"currentHp\":100,\"totalHp\":200}}";
         JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
 
         GeneralType type = generalHandler.getType(jsonObject);
 
-        assertEquals(GeneralType.TARGET, type);
+        assertEquals(GeneralType.PLAYER_TARGET, type);
     }
 
     @Test
     void testSwitchExpressionWithTargetData() {
 
-        String jsonString = "{\"type\":\"TARGET\",\"data\":{\"uuid\":\"123e4567-e89b-12d3-a456-426614174000\",\"currentHp\":75,\"totalHp\":100}}";
+        String jsonString = "{\"type\":\"PLAYER_TARGET\",\"data\":{\"uuid\":\"123e4567-e89b-12d3-a456-426614174000\",\"currentHp\":75,\"totalHp\":100}}";
         JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
 
         // Get type and data
@@ -609,34 +511,67 @@ class ChannelDataHandlerTest {
 
         // Test switch expression pattern
         String result = switch (type) {
-        case LOGIN_SKILLS -> {
-            LoginSkillsData loginData = (LoginSkillsData) data;
-            // Get the first skill from the maps for demonstration
-            SkillType firstSkill = loginData.levels().keySet().iterator().next();
-            Integer level = loginData.getLevel(firstSkill);
-            yield "Login: " + firstSkill + " level " + level;
+        case PLAYER_TARGET -> {
+            PlayerTargetData playerTargetData = (PlayerTargetData) data;
+            yield "Target: " + playerTargetData.uuid() + " HP: " + playerTargetData.currentHp() + "/" + playerTargetData.totalHp();
         }
-        case LOGIN_SKILL_EFFECTS -> {
-            LoginSkillEffectData effectsData = (LoginSkillEffectData) data;
-            // Get the first skill with effects for demonstration
-            SkillType firstSkill = effectsData.modifiers().keySet().iterator().next();
-            Integer modifier = effectsData.getModifier(firstSkill);
-            yield "Login effects: " + firstSkill + " modifier " + modifier;
-        }
-        case GAMEPLAY_SKILLS_EXPERIENCE -> {
-            GameplaySkillsExperienceData expData = (GameplaySkillsExperienceData) data;
-            yield "Experience: " + expData.experienceGained() + " in " + expData.skillType();
-        }
-        case GAMEPLAY_SKILL_EFFECT -> {
-            GameplaySkillEffectData effectData = (GameplaySkillEffectData) data;
-            yield "Effect: " + effectData.skillType() + " modifier changed from " + effectData.previousModifier() + " to " + effectData.newModifier();
-        }
-        case TARGET -> {
-            TargetData targetData = (TargetData) data;
-            yield "Target: " + targetData.uuid() + " HP: " + targetData.currentHp() + "/" + targetData.totalHp();
-        }
+        default -> throw new IllegalArgumentException("Unexpected type: " + type);
         };
 
         assertEquals("Target: 123e4567-e89b-12d3-a456-426614174000 HP: 75/100", result);
+    }
+
+    @Test
+    void testHandleGeneralChannelPlayerTargetDeath() {
+        // Test JSON string for player target death
+        String jsonString = "{\"type\":\"PLAYER_TARGET_DEATH\",\"data\":{\"uuid\":\"123e4567-e89b-12d3-a456-426614174000\"}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        // Handle the data
+        Object result = generalHandler.getData(jsonObject);
+
+        // Verify the result
+        assertTrue(result instanceof PlayerTargetDeathData);
+        PlayerTargetDeathData playerTargetDeathData = (PlayerTargetDeathData) result;
+
+        // Test the UUID
+        assertEquals(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"), playerTargetDeathData.uuid());
+    }
+
+    @Test
+    void testHandleGeneralChannelPlayerTargetDeathWithTypeSafeCasting() {
+        String jsonString = "{\"type\":\"PLAYER_TARGET_DEATH\",\"data\":{\"uuid\":\"550e8400-e29b-41d4-a716-446655440000\"}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        // Use type-safe method
+        PlayerTargetDeathData result = generalHandler.getData(jsonObject, PlayerTargetDeathData.class);
+
+        assertNotNull(result);
+        assertEquals(UUID.fromString("550e8400-e29b-41d4-a716-446655440000"), result.uuid());
+    }
+
+    @Test
+    void testPlayerTargetDeathDataEquality() {
+        UUID uuid = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+        PlayerTargetDeathData data1 = new PlayerTargetDeathData(uuid);
+        PlayerTargetDeathData data2 = new PlayerTargetDeathData(uuid);
+        PlayerTargetDeathData data3 = new PlayerTargetDeathData(UUID.fromString("550e8400-e29b-41d4-a716-446655440000"));
+
+        // Test equality
+        assertEquals(data1, data2);
+        assertNotEquals(data1, data3);
+
+        // Test hashCode
+        assertEquals(data1.hashCode(), data2.hashCode());
+    }
+
+    @Test
+    void testPlayerTargetDeathDataToString() {
+        UUID uuid = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+        PlayerTargetDeathData data = new PlayerTargetDeathData(uuid);
+
+        String result = data.toString();
+        assertTrue(result.contains("PlayerTargetDeathData"));
+        assertTrue(result.contains("123e4567-e89b-12d3-a456-426614174000"));
     }
 }

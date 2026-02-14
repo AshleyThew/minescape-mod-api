@@ -6,7 +6,7 @@ import java.util.UUID;
 /**
  * Data class representing the player's current target mob.
  */
-public class TargetData {
+public class PlayerTargetData {
     private final UUID uuid;
     private final int currentHp;
     private final int totalHp;
@@ -18,7 +18,7 @@ public class TargetData {
      * @param currentHp the current hit points of the target mob
      * @param totalHp   the total hit points of the target mob
      */
-    public TargetData(UUID uuid, int currentHp, int totalHp) {
+    public PlayerTargetData(UUID uuid, int currentHp, int totalHp) {
         this.uuid = uuid;
         this.currentHp = currentHp;
         this.totalHp = totalHp;
@@ -57,7 +57,7 @@ public class TargetData {
             return true;
         if (obj == null || getClass() != obj.getClass())
             return false;
-        TargetData that = (TargetData) obj;
+        PlayerTargetData that = (PlayerTargetData) obj;
         return currentHp == that.currentHp && totalHp == that.totalHp && Objects.equals(uuid, that.uuid);
     }
 

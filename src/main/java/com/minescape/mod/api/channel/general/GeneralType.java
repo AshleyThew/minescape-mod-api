@@ -6,7 +6,8 @@ import com.minescape.mod.api.channel.general.skills.LoginSkillsData;
 import com.minescape.mod.api.channel.general.skills.LoginSkillEffectData;
 import com.minescape.mod.api.channel.general.skills.GameplaySkillsExperienceData;
 import com.minescape.mod.api.channel.general.skills.GameplaySkillEffectData;
-import com.minescape.mod.api.channel.general.target.TargetData;
+import com.minescape.mod.api.channel.general.target.PlayerTargetData;
+import com.minescape.mod.api.channel.general.target.PlayerTargetDeathData;
 
 /**
  * Enum representing different types of data that can be sent through the
@@ -32,7 +33,12 @@ public enum GeneralType implements Supplier<Class<?>> {
     /**
      * Data type for the player's current target mob.
      */
-    TARGET(TargetData.class),;
+    PLAYER_TARGET(PlayerTargetData.class),
+    /**
+     * Data type for when the player kills their target mob.
+     */
+    PLAYER_TARGET_DEATH(PlayerTargetDeathData.class),
+    ;
 
     private final Class<?> dataClass;
 
