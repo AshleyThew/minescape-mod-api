@@ -43,7 +43,7 @@ jobs:
         id: check_tag
         run: |
           VERSION=${{ steps.project_version.outputs.VERSION }}
-          TAG_NAME="v$VERSION"
+          TAG_NAME="$VERSION"
 
           # Check if this is a tag push event
           if [ "${{ github.event_name }}" = "push" ] && [[ "${{ github.ref }}" == refs/tags/* ]]; then
