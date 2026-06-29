@@ -3,9 +3,11 @@ plugins {
     id 'java-library'
     id 'maven-publish'
 }
+def isLocalBuild = project.hasProperty("local")
 
-group = 'com.minescape'
-version = '1.0.9'
+// Dynamically assign the group ID
+group = isLocalBuild ? "com.github.AshleyThew" : "com.minescape"
+version = 'v1.0.10'
 
 java {
     toolchain {

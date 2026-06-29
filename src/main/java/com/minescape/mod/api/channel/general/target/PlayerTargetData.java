@@ -8,18 +8,25 @@ import java.util.UUID;
  */
 public class PlayerTargetData {
     private final UUID uuid;
+    private final UUID nameplateUuid;
     private final int currentHp;
     private final int totalHp;
+
+    public PlayerTargetData(UUID uuid, int currentHp, int totalHp) {
+       this(uuid, null, currentHp, totalHp);
+    }
 
     /**
      * Creates a new TargetData instance.
      *
      * @param uuid      the UUID of the target mob
+     * @param nameplateUuid the UUID of the target mob's nameplate
      * @param currentHp the current hit points of the target mob
      * @param totalHp   the total hit points of the target mob
      */
-    public PlayerTargetData(UUID uuid, int currentHp, int totalHp) {
+    public PlayerTargetData(UUID uuid, UUID nameplateUuid, int currentHp, int totalHp) {
         this.uuid = uuid;
+        this.nameplateUuid = nameplateUuid;
         this.currentHp = currentHp;
         this.totalHp = totalHp;
     }
@@ -31,6 +38,15 @@ public class PlayerTargetData {
      */
     public UUID uuid() {
         return uuid;
+    }
+
+    /**
+     * Gets the UUID of the target mob's nameplate.
+     *
+     * @return the UUID of the target mob's nameplate
+     */
+    public UUID nameplateUuid() {
+        return nameplateUuid;
     }
 
     /**
@@ -68,6 +84,6 @@ public class PlayerTargetData {
 
     @Override
     public String toString() {
-        return "TargetData{" + "uuid=" + uuid + ", currentHp=" + currentHp + ", totalHp=" + totalHp + '}';
+        return "TargetData{" + "uuid=" + uuid + ", nameplateUuid=" + nameplateUuid + ", currentHp=" + currentHp + ", totalHp=" + totalHp + '}';
     }
 }
