@@ -209,6 +209,78 @@ System.out.println("Magic level: " + loginSkillsData.getLevel(SkillType.MAGIC));
 System.out.println("Cooking level: " + loginSkillsData.getLevel(SkillType.COOKING));
 ```
 
+### Item Consumption, Farming and Mob Attacks
+
+```java
+import com.minescape.mod.api.channel.ChannelDataHandler;
+import com.minescape.mod.api.channel.Channels;
+import com.minescape.mod.api.channel.general.GeneralType;
+import com.minescape.mod.api.channel.general.farming.FarmingPlotData;
+import com.minescape.mod.api.channel.general.farming.GameplayFarmingPlantedData;
+import com.minescape.mod.api.channel.general.farming.LoginFarmingPlotsData;
+import com.minescape.mod.api.channel.general.item.GameplayItemConsumedData;
+import com.minescape.mod.api.channel.general.mob.MobAttackData;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+ChannelDataHandler<GeneralType> handler = new ChannelDataHandler<>(Channels.GENERAL, GeneralType.class);
+
+JsonObject jsonObject = JsonParser.parseString(jsonData).getAsJsonObject();
+GeneralType type = handler.getType(jsonObject);
+Object data = handler.getData(jsonObject);
+
+switch (type) {
+    // The player ate a food item or drank a potion. The item is identified by
+    // its item field name, e.g. "SHARK" or "SUPER_ATTACK_4".
+    case GAMEPLAY_ITEM_CONSUMED:
+        GameplayItemConsumedData consumed = (GameplayItemConsumedData) data;
+        System.out.println("Consumed " + consumed.item());
+        break;
+
+    // A farming plot was seeded, identified by the plot name e.g. "CATHERBY_HERBS".
+    case GAMEPLAY_FARMING_PLANTED:
+        GameplayFarmingPlantedData planted = (GameplayFarmingPlantedData) data;
+        System.out.println("Planted in " + planted.patch());
+        break;
+
+    // Sent on join with the state of every farming plot the player owns.
+    case LOGIN_FARMING_PLOTS:
+        LoginFarmingPlotsData plots = (LoginFarmingPlotsData) data;
+        for (FarmingPlotData plot : plots.plantedPlots()) {
+            System.out.println(plot.patch() + ": " + plot.product()
+                    + " (next growth in " + plot.nextGrowthMillis() + "ms)");
+        }
+        break;
+
+    // A mob attacked a player. Broadcast to every player that can see the mob,
+    // not just the player being attacked.
+    case MOB_ATTACK:
+        MobAttackData attack = (MobAttackData) data;
+        System.out.println("Mob " + attack.uuid() + " attacked");
+        break;
+}
+```
+
+Example payloads:
+
+```json
+{"type":"GAMEPLAY_ITEM_CONSUMED","data":{"item":"SHARK"}}
+{"type":"GAMEPLAY_FARMING_PLANTED","data":{"patch":"CATHERBY_HERBS"}}
+{"type":"MOB_ATTACK","data":{"uuid":"123e4567-e89b-12d3-a456-426614174000"}}
+{"type":"LOGIN_FARMING_PLOTS","data":{"plots":{
+  "CATHERBY_HERBS":{"patch":"CATHERBY_HERBS","product":"RANARR","nextGrowthMillis":600000},
+  "FALADOR_HERBS":{"patch":"FALADOR_HERBS","nextGrowthMillis":0}
+}}}
+```
+
+`FarmingPlotData.product()` is `null` when nothing is planted, and `nextGrowthMillis()` is the
+time remaining until the next growth stage as of when the message was sent (0 when the plot
+is empty or has no further stage pending).
+
+Patch and product names are plain strings so the server can add new ones without an API
+release — treat unrecognised values as valid. For the full list of values the server
+currently sends, see [docs/farming-values.md](docs/farming-values.md).
+
 ### NeoForge Integration
 
 Here's an example of how to integrate the MineScape API with NeoForge's custom packet system:
@@ -348,8 +420,17 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - `Channels`: Channel management and registration
 - `GameplaySkillsExperienceData`: Data structure for skills experience tracking
 - `SkillType`: Enumeration of available skill types
+- `GameplayItemConsumedData`: Item field name of a consumed item or potion
+- `GameplayFarmingPlantedData`: Name of a farming plot that was seeded
+- `LoginFarmingPlotsData` / `FarmingPlotData`: Farming plots, what is planted and time to next growth
+- `MobAttackData`: UUID of a mob attacking a player
 
 For detailed API documentation, see the Javadoc comments in the source code.
+
+### Reference
+
+- [Farming patch and product values](docs/farming-values.md) — every `patch` and `product`
+  string the server currently sends
 
 ## Support
 

@@ -2,6 +2,10 @@ package com.minescape.mod.api.channel.general;
 
 import java.util.function.Supplier;
 
+import com.minescape.mod.api.channel.general.farming.GameplayFarmingPlantedData;
+import com.minescape.mod.api.channel.general.farming.LoginFarmingPlotsData;
+import com.minescape.mod.api.channel.general.item.GameplayItemConsumedData;
+import com.minescape.mod.api.channel.general.mob.MobAttackData;
 import com.minescape.mod.api.channel.general.skills.LoginSkillsData;
 import com.minescape.mod.api.channel.general.skills.LoginSkillEffectData;
 import com.minescape.mod.api.channel.general.skills.GameplaySkillsExperienceData;
@@ -38,6 +42,23 @@ public enum GeneralType implements Supplier<Class<?>> {
      * Data type for when the player kills their target mob.
      */
     PLAYER_TARGET_DEATH(PlayerTargetDeathData.class),
+    /**
+     * Data type for when the player consumes an item or potion.
+     */
+    GAMEPLAY_ITEM_CONSUMED(GameplayItemConsumedData.class),
+    /**
+     * Data type for when a farming plot is seeded.
+     */
+    GAMEPLAY_FARMING_PLANTED(GameplayFarmingPlantedData.class),
+    /**
+     * Data type for the player's farming plots and their statuses at login.
+     */
+    LOGIN_FARMING_PLOTS(LoginFarmingPlotsData.class),
+    /**
+     * Data type for when a mob attacks a player, broadcast to every player that
+     * can see the mob.
+     */
+    MOB_ATTACK(MobAttackData.class),
     ;
 
     private final Class<?> dataClass;

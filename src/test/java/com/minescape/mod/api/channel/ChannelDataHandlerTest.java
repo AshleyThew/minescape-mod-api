@@ -8,6 +8,11 @@ import com.minescape.mod.api.channel.general.skills.GameplaySkillsExperienceData
 import com.minescape.mod.api.channel.general.skills.GameplaySkillEffectData;
 import com.minescape.mod.api.channel.general.target.PlayerTargetData;
 import com.minescape.mod.api.channel.general.target.PlayerTargetDeathData;
+import com.minescape.mod.api.channel.general.farming.FarmingPlotData;
+import com.minescape.mod.api.channel.general.farming.GameplayFarmingPlantedData;
+import com.minescape.mod.api.channel.general.farming.LoginFarmingPlotsData;
+import com.minescape.mod.api.channel.general.item.GameplayItemConsumedData;
+import com.minescape.mod.api.channel.general.mob.MobAttackData;
 import com.minescape.mod.api.channel.general.GeneralType;
 import com.minescape.mod.api.types.skills.SkillType;
 import org.junit.jupiter.api.Test;
@@ -573,5 +578,169 @@ class ChannelDataHandlerTest {
         String result = data.toString();
         assertTrue(result.contains("PlayerTargetDeathData"));
         assertTrue(result.contains("123e4567-e89b-12d3-a456-426614174000"));
+    }
+
+    @Test
+    void testHandleGeneralChannelItemConsumed() {
+        String jsonString = "{\"type\":\"GAMEPLAY_ITEM_CONSUMED\",\"data\":{\"item\":\"SHARK\"}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        Object result = generalHandler.getData(jsonObject);
+
+        assertTrue(result instanceof GameplayItemConsumedData);
+        assertEquals("SHARK", ((GameplayItemConsumedData) result).item());
+    }
+
+    @Test
+    void testHandleItemConsumedWithTypeSafeCasting() {
+        String jsonString = "{\"type\":\"GAMEPLAY_ITEM_CONSUMED\",\"data\":{\"item\":\"SUPER_ATTACK_4\"}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        GameplayItemConsumedData result = generalHandler.getData(jsonObject, GameplayItemConsumedData.class);
+
+        assertNotNull(result);
+        assertEquals("SUPER_ATTACK_4", result.item());
+        assertEquals(GeneralType.GAMEPLAY_ITEM_CONSUMED, generalHandler.getType(jsonObject));
+    }
+
+    @Test
+    void testItemConsumedDataEquality() {
+        GameplayItemConsumedData data1 = new GameplayItemConsumedData("SHARK");
+        GameplayItemConsumedData data2 = new GameplayItemConsumedData("SHARK");
+        GameplayItemConsumedData data3 = new GameplayItemConsumedData("LOBSTER");
+
+        assertEquals(data1, data2);
+        assertNotEquals(data1, data3);
+        assertEquals(data1.hashCode(), data2.hashCode());
+    }
+
+    @Test
+    void testHandleGeneralChannelFarmingPlanted() {
+        String jsonString = "{\"type\":\"GAMEPLAY_FARMING_PLANTED\",\"data\":{\"patch\":\"CATHERBY_HERBS\"}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        Object result = generalHandler.getData(jsonObject);
+
+        assertTrue(result instanceof GameplayFarmingPlantedData);
+        assertEquals("CATHERBY_HERBS", ((GameplayFarmingPlantedData) result).patch());
+    }
+
+    @Test
+    void testHandleFarmingPlantedWithTypeSafeCasting() {
+        String jsonString = "{\"type\":\"GAMEPLAY_FARMING_PLANTED\",\"data\":{\"patch\":\"FALADOR_ALLOTMENT_NORTH\"}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        GameplayFarmingPlantedData result = generalHandler.getData(jsonObject, GameplayFarmingPlantedData.class);
+
+        assertNotNull(result);
+        assertEquals("FALADOR_ALLOTMENT_NORTH", result.patch());
+        assertEquals(GeneralType.GAMEPLAY_FARMING_PLANTED, generalHandler.getType(jsonObject));
+    }
+
+    @Test
+    void testHandleGeneralChannelLoginFarmingPlots() {
+        String jsonString = "{\"type\":\"LOGIN_FARMING_PLOTS\",\"data\":{\"plots\":{"
+                + "\"CATHERBY_HERBS\":{\"patch\":\"CATHERBY_HERBS\",\"product\":\"RANARR\",\"nextGrowthMillis\":600000},"
+                + "\"PRIFDDINAS_ALLOTMENT_NORTH\":{\"patch\":\"PRIFDDINAS_ALLOTMENT_NORTH\",\"product\":\"WATERMELON\",\"nextGrowthMillis\":0},"
+                + "\"FALADOR_HERBS\":{\"patch\":\"FALADOR_HERBS\",\"nextGrowthMillis\":0}}}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        Object result = generalHandler.getData(jsonObject);
+
+        assertTrue(result instanceof LoginFarmingPlotsData);
+        LoginFarmingPlotsData plotsData = (LoginFarmingPlotsData) result;
+
+        assertEquals(3, plotsData.plots().size());
+
+        FarmingPlotData catherby = plotsData.getPlot("CATHERBY_HERBS");
+        assertNotNull(catherby);
+        assertEquals("CATHERBY_HERBS", catherby.patch());
+        assertEquals("RANARR", catherby.product());
+        assertEquals(600000L, catherby.nextGrowthMillis());
+        assertTrue(catherby.isPlanted());
+        assertTrue(catherby.isGrowing());
+
+        // Planted but no further growth stage pending
+        FarmingPlotData prifddinas = plotsData.getPlot("PRIFDDINAS_ALLOTMENT_NORTH");
+        assertNotNull(prifddinas);
+        assertEquals("WATERMELON", prifddinas.product());
+        assertTrue(prifddinas.isPlanted());
+        assertFalse(prifddinas.isGrowing());
+
+        // Empty plot
+        FarmingPlotData falador = plotsData.getPlot("FALADOR_HERBS");
+        assertNotNull(falador);
+        assertNull(falador.product());
+        assertEquals(0L, falador.nextGrowthMillis());
+        assertFalse(falador.isPlanted());
+        assertFalse(falador.isGrowing());
+
+        assertTrue(plotsData.isPlanted("CATHERBY_HERBS"));
+        assertFalse(plotsData.isPlanted("FALADOR_HERBS"));
+        assertFalse(plotsData.isPlanted("ARDOUGNE_HERBS"));
+        assertEquals(2, plotsData.plantedPlots().size());
+    }
+
+    @Test
+    void testLoginFarmingPlotsEmpty() {
+        String jsonString = "{\"type\":\"LOGIN_FARMING_PLOTS\",\"data\":{\"plots\":{}}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        LoginFarmingPlotsData result = generalHandler.getData(jsonObject, LoginFarmingPlotsData.class);
+
+        assertNotNull(result);
+        assertEquals(0, result.plots().size());
+        assertNull(result.getPlot("CATHERBY_HERBS"));
+        assertFalse(result.isPlanted("CATHERBY_HERBS"));
+        assertTrue(result.plantedPlots().isEmpty());
+        assertEquals(GeneralType.LOGIN_FARMING_PLOTS, generalHandler.getType(jsonObject));
+    }
+
+    @Test
+    void testLoginFarmingPlotsMissingPlots() {
+        String jsonString = "{\"type\":\"LOGIN_FARMING_PLOTS\",\"data\":{}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        LoginFarmingPlotsData result = generalHandler.getData(jsonObject, LoginFarmingPlotsData.class);
+
+        assertNotNull(result);
+        assertEquals(0, result.plots().size());
+        assertFalse(result.isPlanted("CATHERBY_HERBS"));
+    }
+
+    @Test
+    void testHandleGeneralChannelMobAttack() {
+        String jsonString = "{\"type\":\"MOB_ATTACK\",\"data\":{\"uuid\":\"123e4567-e89b-12d3-a456-426614174000\"}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        Object result = generalHandler.getData(jsonObject);
+
+        assertTrue(result instanceof MobAttackData);
+        assertEquals(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"), ((MobAttackData) result).uuid());
+    }
+
+    @Test
+    void testHandleMobAttackWithTypeSafeCasting() {
+        String jsonString = "{\"type\":\"MOB_ATTACK\",\"data\":{\"uuid\":\"550e8400-e29b-41d4-a716-446655440000\"}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        MobAttackData result = generalHandler.getData(jsonObject, MobAttackData.class);
+
+        assertNotNull(result);
+        assertEquals(UUID.fromString("550e8400-e29b-41d4-a716-446655440000"), result.uuid());
+        assertEquals(GeneralType.MOB_ATTACK, generalHandler.getType(jsonObject));
+    }
+
+    @Test
+    void testMobAttackDataEquality() {
+        UUID uuid = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+        MobAttackData data1 = new MobAttackData(uuid);
+        MobAttackData data2 = new MobAttackData(uuid);
+        MobAttackData data3 = new MobAttackData(UUID.fromString("550e8400-e29b-41d4-a716-446655440000"));
+
+        assertEquals(data1, data2);
+        assertNotEquals(data1, data3);
+        assertEquals(data1.hashCode(), data2.hashCode());
+        assertTrue(data1.toString().contains("MobAttackData"));
     }
 }
