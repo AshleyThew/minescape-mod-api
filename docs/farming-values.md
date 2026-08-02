@@ -3,6 +3,7 @@
 Reference for the string values carried by the farming data types:
 
 - `GameplayFarmingPlantedData.patch()` — a **patch** name
+- `GameplayFarmingPlantedData.plotData()` — updated plot state as a `FarmingPlotData`, or `null` when omitted by the server
 - `FarmingPlotData.patch()` — a **patch** name
 - `FarmingPlotData.product()` — a **product** name, or `null` when the plot is empty
 

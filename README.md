@@ -238,9 +238,17 @@ switch (type) {
         break;
 
     // A farming plot was seeded, identified by the plot name e.g. "CATHERBY_HERBS".
+    // plotData() contains the updated plot state when provided by the server, or null
+    // when the server omits it (treat the same as receiving a fresh LOGIN_FARMING_PLOTS
+    // entry for that patch).
     case GAMEPLAY_FARMING_PLANTED:
         GameplayFarmingPlantedData planted = (GameplayFarmingPlantedData) data;
         System.out.println("Planted in " + planted.patch());
+        if (planted.plotData() != null) {
+            FarmingPlotData updatedPlot = planted.plotData();
+            System.out.println("  product: " + updatedPlot.product()
+                    + ", next growth in " + updatedPlot.nextGrowthMillis() + "ms");
+        }
         break;
 
     // Sent on join with the state of every farming plot the player owns.
@@ -266,6 +274,7 @@ Example payloads:
 ```json
 {"type":"GAMEPLAY_ITEM_CONSUMED","data":{"item":"SHARK"}}
 {"type":"GAMEPLAY_FARMING_PLANTED","data":{"patch":"CATHERBY_HERBS"}}
+{"type":"GAMEPLAY_FARMING_PLANTED","data":{"patch":"CATHERBY_HERBS","plotData":{"patch":"CATHERBY_HERBS","product":"RANARR","nextGrowthMillis":600000}}}
 {"type":"MOB_ATTACK","data":{"uuid":"123e4567-e89b-12d3-a456-426614174000"}}
 {"type":"LOGIN_FARMING_PLOTS","data":{"plots":{
   "CATHERBY_HERBS":{"patch":"CATHERBY_HERBS","product":"RANARR","nextGrowthMillis":600000},
@@ -421,7 +430,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - `GameplaySkillsExperienceData`: Data structure for skills experience tracking
 - `SkillType`: Enumeration of available skill types
 - `GameplayItemConsumedData`: Item field name of a consumed item or potion
-- `GameplayFarmingPlantedData`: Name of a farming plot that was seeded
+- `GameplayFarmingPlantedData`: Name of a farming plot that was seeded, plus an optional updated `FarmingPlotData` snapshot of that plot
 - `LoginFarmingPlotsData` / `FarmingPlotData`: Farming plots, what is planted and time to next growth
 - `MobAttackData`: UUID of a mob attacking a player
 
