@@ -3,6 +3,7 @@
 Reference for the string values carried by the farming data types:
 
 - `GameplayFarmingPlantedData.patch()` — a **patch** name
+- `GameplayFarmingPlantedData.plotData()` — updated plot state as a `FarmingPlotData`, or `null` when omitted by the server
 - `FarmingPlotData.patch()` — a **patch** name
 - `FarmingPlotData.product()` — a **product** name, or `null` when the plot is empty
 
@@ -10,7 +11,7 @@ These are strings rather than enums on purpose: the server can add a patch or a
 crop without requiring a new API release. **Treat any value you do not recognise
 as valid** — fall back to displaying the raw name rather than throwing.
 
-The lists below are the complete set the server sends as of API `v1.0.11`.
+The lists below are the complete set the server sends as of API `v1.0.12`.
 
 ## Patches
 

@@ -622,7 +622,9 @@ class ChannelDataHandlerTest {
         Object result = generalHandler.getData(jsonObject);
 
         assertTrue(result instanceof GameplayFarmingPlantedData);
-        assertEquals("CATHERBY_HERBS", ((GameplayFarmingPlantedData) result).patch());
+        GameplayFarmingPlantedData planted = (GameplayFarmingPlantedData) result;
+        assertEquals("CATHERBY_HERBS", planted.patch());
+        assertNull(planted.plotData());
     }
 
     @Test
@@ -634,7 +636,42 @@ class ChannelDataHandlerTest {
 
         assertNotNull(result);
         assertEquals("FALADOR_ALLOTMENT_NORTH", result.patch());
+        assertNull(result.plotData());
         assertEquals(GeneralType.GAMEPLAY_FARMING_PLANTED, generalHandler.getType(jsonObject));
+    }
+
+    @Test
+    void testHandleFarmingPlantedWithPlotData() {
+        String jsonString = "{\"type\":\"GAMEPLAY_FARMING_PLANTED\",\"data\":{\"patch\":\"CATHERBY_HERBS\","
+                + "\"plotData\":{\"patch\":\"CATHERBY_HERBS\",\"product\":\"RANARR\",\"nextGrowthMillis\":60000}}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        GameplayFarmingPlantedData result = generalHandler.getData(jsonObject, GameplayFarmingPlantedData.class);
+
+        assertNotNull(result);
+        assertEquals("CATHERBY_HERBS", result.patch());
+        assertNotNull(result.plotData());
+        assertEquals("CATHERBY_HERBS", result.plotData().patch());
+        assertEquals("RANARR", result.plotData().product());
+        assertEquals(60000L, result.plotData().nextGrowthMillis());
+        assertTrue(result.plotData().isPlanted());
+        assertTrue(result.plotData().isGrowing());
+    }
+
+    @Test
+    void testGameplayFarmingPlantedDataEquality() {
+        FarmingPlotData plotData1 = new FarmingPlotData("CATHERBY_HERBS", "RANARR", 60000L);
+        FarmingPlotData plotData2 = new FarmingPlotData("CATHERBY_HERBS", "RANARR", 60000L);
+
+        GameplayFarmingPlantedData data1 = new GameplayFarmingPlantedData("CATHERBY_HERBS", plotData1);
+        GameplayFarmingPlantedData data2 = new GameplayFarmingPlantedData("CATHERBY_HERBS", plotData2);
+        GameplayFarmingPlantedData data3 = new GameplayFarmingPlantedData("CATHERBY_HERBS");
+        GameplayFarmingPlantedData data4 = new GameplayFarmingPlantedData("FALADOR_ALLOTMENT_NORTH", plotData1);
+
+        assertEquals(data1, data2);
+        assertNotEquals(data1, data3);
+        assertNotEquals(data1, data4);
+        assertEquals(data1.hashCode(), data2.hashCode());
     }
 
     @Test
