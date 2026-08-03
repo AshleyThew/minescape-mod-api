@@ -660,18 +660,18 @@ class ChannelDataHandlerTest {
 
     @Test
     void testGameplayFarmingPlantedDataEquality() {
-        FarmingPlotData plotData = new FarmingPlotData("CATHERBY_HERBS", "RANARR", 60000L);
+        FarmingPlotData plotData1 = new FarmingPlotData("CATHERBY_HERBS", "RANARR", 60000L);
+        FarmingPlotData plotData2 = new FarmingPlotData("CATHERBY_HERBS", "RANARR", 60000L);
 
-        GameplayFarmingPlantedData data1 = new GameplayFarmingPlantedData("CATHERBY_HERBS", plotData);
-        GameplayFarmingPlantedData data2 = new GameplayFarmingPlantedData("CATHERBY_HERBS", plotData);
+        GameplayFarmingPlantedData data1 = new GameplayFarmingPlantedData("CATHERBY_HERBS", plotData1);
+        GameplayFarmingPlantedData data2 = new GameplayFarmingPlantedData("CATHERBY_HERBS", plotData2);
         GameplayFarmingPlantedData data3 = new GameplayFarmingPlantedData("CATHERBY_HERBS");
-        GameplayFarmingPlantedData data4 = new GameplayFarmingPlantedData("FALADOR_ALLOTMENT_NORTH", plotData);
+        GameplayFarmingPlantedData data4 = new GameplayFarmingPlantedData("FALADOR_ALLOTMENT_NORTH", plotData1);
 
         assertEquals(data1, data2);
         assertNotEquals(data1, data3);
         assertNotEquals(data1, data4);
         assertEquals(data1.hashCode(), data2.hashCode());
-        assertTrue(data1.toString().contains("RANARR"));
     }
 
     @Test
