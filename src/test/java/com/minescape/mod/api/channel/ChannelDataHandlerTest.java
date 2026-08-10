@@ -747,13 +747,26 @@ class ChannelDataHandlerTest {
 
     @Test
     void testHandleGeneralChannelMobAttack() {
-        String jsonString = "{\"type\":\"MOB_ATTACK\",\"data\":{\"uuid\":\"123e4567-e89b-12d3-a456-426614174000\"}}";
+        String jsonString = "{\"type\":\"MOB_ATTACK\",\"data\":{\"uuid\":\"123e4567-e89b-12d3-a456-426614174000\",\"style\":\"MELEE\"}}";
         JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
 
         Object result = generalHandler.getData(jsonObject);
 
         assertTrue(result instanceof MobAttackData);
         assertEquals(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"), ((MobAttackData) result).uuid());
+        assertEquals("MELEE", ((MobAttackData) result).style());
+    }
+
+    @Test
+    void testHandleGeneralChannelMobAttackWithoutStyle() {
+        String jsonString = "{\"type\":\"MOB_ATTACK\",\"data\":{\"uuid\":\"123e4567-e89b-12d3-a456-426614174000\"}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        MobAttackData result = generalHandler.getData(jsonObject, MobAttackData.class);
+
+        assertNotNull(result);
+        assertEquals(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"), result.uuid());
+        assertNull(result.style());
     }
 
     @Test
@@ -774,10 +787,15 @@ class ChannelDataHandlerTest {
         MobAttackData data1 = new MobAttackData(uuid);
         MobAttackData data2 = new MobAttackData(uuid);
         MobAttackData data3 = new MobAttackData(UUID.fromString("550e8400-e29b-41d4-a716-446655440000"));
+        MobAttackData data4 = new MobAttackData(uuid, "MELEE");
+        MobAttackData data5 = new MobAttackData(uuid, "MELEE");
 
         assertEquals(data1, data2);
         assertNotEquals(data1, data3);
         assertEquals(data1.hashCode(), data2.hashCode());
+        assertEquals(data4, data5);
+        assertNotEquals(data1, data4);
+        assertEquals(data4.hashCode(), data5.hashCode());
         assertTrue(data1.toString().contains("MobAttackData"));
     }
 }

@@ -31,7 +31,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.AshleyThew:minescape-mod-api:v1.0.12'
+    implementation 'com.github.AshleyThew:minescape-mod-api:v1.0.13'
 }
 ```
 
@@ -54,15 +54,15 @@ tasks.named('jarJar') {
 }
 
 dependencies {
-    implementation 'com.github.AshleyThew:minescape-mod-api:v1.0.12'
-    jarJar(group: 'com.github.AshleyThew', name: 'minescape-mod-api', version: '[v1.0.12]')
+    implementation 'com.github.AshleyThew:minescape-mod-api:v1.0.13'
+    jarJar(group: 'com.github.AshleyThew', name: 'minescape-mod-api', version: '[v1.0.13]')
     jarJar(implementation("com.github.AshleyThew:minescape-mod-api")) {
         version {
-            strictly '[v1.0.12,)'
-            prefer 'v1.0.12'
+            strictly '[v1.0.13,)'
+            prefer 'v1.0.13'
         }
     }
-    additionalRuntimeClasspath("com.github.AshleyThew:minescape-mod-api:v1.0.12")
+    additionalRuntimeClasspath("com.github.AshleyThew:minescape-mod-api:v1.0.13")
 }
 ```
 
@@ -261,10 +261,11 @@ switch (type) {
         break;
 
     // A mob attacked a player. Broadcast to every player that can see the mob,
-    // not just the player being attacked.
+    // not just the player being attacked. style() is the attack style used
+    // (e.g. MELEE, RANGED, MAGIC, DRAGONFIRE), or null when unknown.
     case MOB_ATTACK:
         MobAttackData attack = (MobAttackData) data;
-        System.out.println("Mob " + attack.uuid() + " attacked");
+        System.out.println("Mob " + attack.uuid() + " attacked with " + attack.style());
         break;
 }
 ```
@@ -275,7 +276,7 @@ Example payloads:
 {"type":"GAMEPLAY_ITEM_CONSUMED","data":{"item":"SHARK"}}
 {"type":"GAMEPLAY_FARMING_PLANTED","data":{"patch":"CATHERBY_HERBS"}}
 {"type":"GAMEPLAY_FARMING_PLANTED","data":{"patch":"CATHERBY_HERBS","plotData":{"patch":"CATHERBY_HERBS","product":"RANARR","nextGrowthMillis":600000}}}
-{"type":"MOB_ATTACK","data":{"uuid":"123e4567-e89b-12d3-a456-426614174000"}}
+{"type":"MOB_ATTACK","data":{"uuid":"123e4567-e89b-12d3-a456-426614174000","style":"MELEE"}}
 {"type":"LOGIN_FARMING_PLOTS","data":{"plots":{
   "CATHERBY_HERBS":{"patch":"CATHERBY_HERBS","product":"RANARR","nextGrowthMillis":600000},
   "FALADOR_HERBS":{"patch":"FALADOR_HERBS","nextGrowthMillis":0}
@@ -432,7 +433,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - `GameplayItemConsumedData`: Item field name of a consumed item or potion
 - `GameplayFarmingPlantedData`: Name of a farming plot that was seeded, plus an optional updated `FarmingPlotData` snapshot of that plot
 - `LoginFarmingPlotsData` / `FarmingPlotData`: Farming plots, what is planted and time to next growth
-- `MobAttackData`: UUID of a mob attacking a player
+- `MobAttackData`: UUID of a mob attacking a player, plus the attack style used
 
 For detailed API documentation, see the Javadoc comments in the source code.
 
@@ -440,6 +441,8 @@ For detailed API documentation, see the Javadoc comments in the source code.
 
 - [Farming patch and product values](docs/farming-values.md) — every `patch` and `product`
   string the server currently sends
+- [Mob attack style values](docs/mob-attack-styles.md) — every `style` string the server
+  currently sends with `MOB_ATTACK`
 
 ## Support
 

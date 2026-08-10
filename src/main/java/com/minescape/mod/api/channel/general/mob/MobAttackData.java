@@ -11,14 +11,26 @@ import java.util.UUID;
  */
 public class MobAttackData {
     private final UUID uuid;
+    private final String style;
 
     /**
-     * Creates a new MobAttackData instance.
+     * Creates a new MobAttackData instance with no attack style.
      *
      * @param uuid the UUID of the attacking mob
      */
     public MobAttackData(UUID uuid) {
+        this(uuid, null);
+    }
+
+    /**
+     * Creates a new MobAttackData instance.
+     *
+     * @param uuid  the UUID of the attacking mob
+     * @param style the attack style used, or {@code null} when unknown
+     */
+    public MobAttackData(UUID uuid, String style) {
         this.uuid = uuid;
+        this.style = style;
     }
 
     /**
@@ -30,6 +42,24 @@ public class MobAttackData {
         return uuid;
     }
 
+    /**
+     * Gets the attack style the mob used, such as {@code MELEE}, {@code RANGED},
+     * {@code MAGIC} or {@code DRAGONFIRE}.
+     * <p>
+     * This is a string rather than an enum on purpose: the server can add a
+     * style without requiring a new API release. Treat any value you do not
+     * recognise as valid, and expect {@code null} from older servers or for
+     * attacks whose style is unknown.
+     *
+     * @return the attack style name, or {@code null} when unknown
+     * @see <a href=
+     *      "https://github.com/AshleyThew/minescape-mod-api/blob/main/docs/mob-attack-styles.md">Mob
+     *      attack style values</a>
+     */
+    public String style() {
+        return style;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
@@ -37,16 +67,16 @@ public class MobAttackData {
         if (obj == null || getClass() != obj.getClass())
             return false;
         MobAttackData that = (MobAttackData) obj;
-        return Objects.equals(uuid, that.uuid);
+        return Objects.equals(uuid, that.uuid) && Objects.equals(style, that.style);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uuid);
+        return Objects.hash(uuid, style);
     }
 
     @Override
     public String toString() {
-        return "MobAttackData{" + "uuid=" + uuid + '}';
+        return "MobAttackData{" + "uuid=" + uuid + ", style=" + style + '}';
     }
 }
