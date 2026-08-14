@@ -6,6 +6,7 @@ import com.minescape.mod.api.channel.general.farming.GameplayFarmingPlantedData;
 import com.minescape.mod.api.channel.general.farming.LoginFarmingPlotsData;
 import com.minescape.mod.api.channel.general.item.GameplayItemConsumedData;
 import com.minescape.mod.api.channel.general.mob.MobAttackData;
+import com.minescape.mod.api.channel.general.mob.MobDefenceData;
 import com.minescape.mod.api.channel.general.skills.LoginSkillsData;
 import com.minescape.mod.api.channel.general.skills.LoginSkillEffectData;
 import com.minescape.mod.api.channel.general.skills.GameplaySkillsExperienceData;
@@ -59,6 +60,11 @@ public enum GeneralType implements Supplier<Class<?>> {
      * can see the mob.
      */
     MOB_ATTACK(MobAttackData.class),
+    /**
+     * Data type for when a mob defends an attack made against it, broadcast to
+     * every player that can see the mob.
+     */
+    MOB_DEFENCE(MobDefenceData.class),
     ;
 
     private final Class<?> dataClass;

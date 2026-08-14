@@ -1,8 +1,14 @@
 # Mob Attack Style Values
 
-Reference for the string values carried by the mob attack data type:
+Reference for the string values carried by the mob data types:
 
-- `MobAttackData.style()` — an **attack style** name, or `null` when unknown
+- `MobAttackData.style()` — the **attack style** the mob used, or `null` when unknown
+- `MobDefenceData.style()` — the **attack style** the mob defended against, or `null`
+  when unknown
+
+Both draw from the same list. On `MOB_ATTACK` the style describes an attack the mob
+made; on `MOB_DEFENCE` it describes the incoming attack it took, so a player hitting a
+mob with a scimitar produces `MELEE` on the defence.
 
 These are strings rather than enums on purpose: the server can add a style
 without requiring a new API release. **Treat any value you do not recognise as
@@ -10,7 +16,7 @@ valid** — fall back to ignoring the style (or displaying the raw name) rather
 than throwing. Older servers, and attacks whose style the server does not know,
 send no style at all, so `style()` must also tolerate `null`.
 
-The lists below are the complete set the server sends as of API `v1.0.13`.
+The lists below are the complete set the server sends as of API `v1.0.14`.
 
 ## Core styles (4)
 
@@ -53,3 +59,11 @@ attack. Some examples of mobs that send more than one style:
 
 Mobs with a single combat style always send that same value, and any mob whose
 handler does not report a style yet sends no style at all.
+
+## Styles on `MOB_DEFENCE`
+
+A defence carries the style of the hit the mob just took, so in practice it is one
+of the three player combat styles — `MELEE`, `RANGED` or `MAGIC` — or `null` when
+the server cannot attribute the hit to a style (damage from another mob, a ring of
+recoil, poison and other non-combat sources). Handle the same full list anyway: a
+mob damaging another mob can send any style above.

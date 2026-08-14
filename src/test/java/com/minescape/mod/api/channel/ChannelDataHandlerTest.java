@@ -13,6 +13,7 @@ import com.minescape.mod.api.channel.general.farming.GameplayFarmingPlantedData;
 import com.minescape.mod.api.channel.general.farming.LoginFarmingPlotsData;
 import com.minescape.mod.api.channel.general.item.GameplayItemConsumedData;
 import com.minescape.mod.api.channel.general.mob.MobAttackData;
+import com.minescape.mod.api.channel.general.mob.MobDefenceData;
 import com.minescape.mod.api.channel.general.GeneralType;
 import com.minescape.mod.api.types.skills.SkillType;
 import org.junit.jupiter.api.Test;
@@ -797,5 +798,86 @@ class ChannelDataHandlerTest {
         assertNotEquals(data1, data4);
         assertEquals(data4.hashCode(), data5.hashCode());
         assertTrue(data1.toString().contains("MobAttackData"));
+    }
+
+    @Test
+    void testHandleGeneralChannelMobDefence() {
+        String jsonString = "{\"type\":\"MOB_DEFENCE\",\"data\":{\"uuid\":\"123e4567-e89b-12d3-a456-426614174000\",\"style\":\"MELEE\",\"damage\":7}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        Object result = generalHandler.getData(jsonObject);
+
+        assertTrue(result instanceof MobDefenceData);
+        MobDefenceData defence = (MobDefenceData) result;
+        assertEquals(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"), defence.uuid());
+        assertEquals("MELEE", defence.style());
+        assertEquals(7, defence.damage());
+        assertFalse(defence.blocked());
+    }
+
+    @Test
+    void testHandleGeneralChannelMobDefenceBlocked() {
+        String jsonString = "{\"type\":\"MOB_DEFENCE\",\"data\":{\"uuid\":\"123e4567-e89b-12d3-a456-426614174000\",\"style\":\"RANGED\",\"damage\":0}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        MobDefenceData result = generalHandler.getData(jsonObject, MobDefenceData.class);
+
+        assertNotNull(result);
+        assertEquals("RANGED", result.style());
+        assertEquals(0, result.damage());
+        assertTrue(result.blocked());
+    }
+
+    @Test
+    void testHandleGeneralChannelMobDefenceWithoutStyleOrDamage() {
+        String jsonString = "{\"type\":\"MOB_DEFENCE\",\"data\":{\"uuid\":\"550e8400-e29b-41d4-a716-446655440000\"}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        MobDefenceData result = generalHandler.getData(jsonObject, MobDefenceData.class);
+
+        assertNotNull(result);
+        assertEquals(UUID.fromString("550e8400-e29b-41d4-a716-446655440000"), result.uuid());
+        assertNull(result.style());
+        assertEquals(0, result.damage());
+        assertTrue(result.blocked());
+        assertEquals(GeneralType.MOB_DEFENCE, generalHandler.getType(jsonObject));
+    }
+
+    @Test
+    void testMobDefenceDataEquality() {
+        UUID uuid = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+        MobDefenceData data1 = new MobDefenceData(uuid);
+        MobDefenceData data2 = new MobDefenceData(uuid);
+        MobDefenceData data3 = new MobDefenceData(UUID.fromString("550e8400-e29b-41d4-a716-446655440000"));
+        MobDefenceData data4 = new MobDefenceData(uuid, "MELEE", 7);
+        MobDefenceData data5 = new MobDefenceData(uuid, "MELEE", 7);
+        MobDefenceData data6 = new MobDefenceData(uuid, "MELEE");
+
+        assertEquals(data1, data2);
+        assertNotEquals(data1, data3);
+        assertEquals(data1.hashCode(), data2.hashCode());
+        assertEquals(data4, data5);
+        assertNotEquals(data4, data6);
+        assertEquals(data4.hashCode(), data5.hashCode());
+        assertTrue(data1.toString().contains("MobDefenceData"));
+    }
+
+    @Test
+    void testSwitchExpressionWithMobDefenceData() {
+        String jsonString = "{\"type\":\"MOB_DEFENCE\",\"data\":{\"uuid\":\"123e4567-e89b-12d3-a456-426614174000\",\"style\":\"MAGIC\",\"damage\":3}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        GeneralType type = generalHandler.getType(jsonObject);
+        Object data = generalHandler.getData(jsonObject);
+
+        String result = switch (type) {
+        case MOB_DEFENCE -> {
+            MobDefenceData defence = (MobDefenceData) data;
+            yield "Defended " + defence.style() + " for " + defence.damage();
+        }
+        default -> throw new IllegalArgumentException("Unexpected type: " + type);
+        };
+
+        assertEquals("Defended MAGIC for 3", result);
     }
 }

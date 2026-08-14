@@ -31,7 +31,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.AshleyThew:minescape-mod-api:v1.0.13'
+    implementation 'com.github.AshleyThew:minescape-mod-api:v1.0.14'
 }
 ```
 
@@ -54,15 +54,15 @@ tasks.named('jarJar') {
 }
 
 dependencies {
-    implementation 'com.github.AshleyThew:minescape-mod-api:v1.0.13'
-    jarJar(group: 'com.github.AshleyThew', name: 'minescape-mod-api', version: '[v1.0.13]')
+    implementation 'com.github.AshleyThew:minescape-mod-api:v1.0.14'
+    jarJar(group: 'com.github.AshleyThew', name: 'minescape-mod-api', version: '[v1.0.14]')
     jarJar(implementation("com.github.AshleyThew:minescape-mod-api")) {
         version {
-            strictly '[v1.0.13,)'
-            prefer 'v1.0.13'
+            strictly '[v1.0.14,)'
+            prefer 'v1.0.14'
         }
     }
-    additionalRuntimeClasspath("com.github.AshleyThew:minescape-mod-api:v1.0.13")
+    additionalRuntimeClasspath("com.github.AshleyThew:minescape-mod-api:v1.0.14")
 }
 ```
 
@@ -209,7 +209,7 @@ System.out.println("Magic level: " + loginSkillsData.getLevel(SkillType.MAGIC));
 System.out.println("Cooking level: " + loginSkillsData.getLevel(SkillType.COOKING));
 ```
 
-### Item Consumption, Farming and Mob Attacks
+### Item Consumption, Farming and Mob Combat
 
 ```java
 import com.minescape.mod.api.channel.ChannelDataHandler;
@@ -220,6 +220,7 @@ import com.minescape.mod.api.channel.general.farming.GameplayFarmingPlantedData;
 import com.minescape.mod.api.channel.general.farming.LoginFarmingPlotsData;
 import com.minescape.mod.api.channel.general.item.GameplayItemConsumedData;
 import com.minescape.mod.api.channel.general.mob.MobAttackData;
+import com.minescape.mod.api.channel.general.mob.MobDefenceData;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -267,6 +268,16 @@ switch (type) {
         MobAttackData attack = (MobAttackData) data;
         System.out.println("Mob " + attack.uuid() + " attacked with " + attack.style());
         break;
+
+    // A mob defended an attack made against it. Broadcast to every player that
+    // can see the mob, the same way MOB_ATTACK is. style() is the style of the
+    // incoming attack (or null when unknown) and damage() is what the mob took
+    // from it, 0 when the hit did nothing — blocked() is the same check.
+    case MOB_DEFENCE:
+        MobDefenceData defence = (MobDefenceData) data;
+        System.out.println("Mob " + defence.uuid() + " defended " + defence.style()
+                + (defence.blocked() ? " and took nothing" : " for " + defence.damage()));
+        break;
 }
 ```
 
@@ -277,6 +288,8 @@ Example payloads:
 {"type":"GAMEPLAY_FARMING_PLANTED","data":{"patch":"CATHERBY_HERBS"}}
 {"type":"GAMEPLAY_FARMING_PLANTED","data":{"patch":"CATHERBY_HERBS","plotData":{"patch":"CATHERBY_HERBS","product":"RANARR","nextGrowthMillis":600000}}}
 {"type":"MOB_ATTACK","data":{"uuid":"123e4567-e89b-12d3-a456-426614174000","style":"MELEE"}}
+{"type":"MOB_DEFENCE","data":{"uuid":"123e4567-e89b-12d3-a456-426614174000","style":"MELEE","damage":7}}
+{"type":"MOB_DEFENCE","data":{"uuid":"123e4567-e89b-12d3-a456-426614174000","style":"RANGED","damage":0}}
 {"type":"LOGIN_FARMING_PLOTS","data":{"plots":{
   "CATHERBY_HERBS":{"patch":"CATHERBY_HERBS","product":"RANARR","nextGrowthMillis":600000},
   "FALADOR_HERBS":{"patch":"FALADOR_HERBS","nextGrowthMillis":0}
@@ -434,6 +447,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - `GameplayFarmingPlantedData`: Name of a farming plot that was seeded, plus an optional updated `FarmingPlotData` snapshot of that plot
 - `LoginFarmingPlotsData` / `FarmingPlotData`: Farming plots, what is planted and time to next growth
 - `MobAttackData`: UUID of a mob attacking a player, plus the attack style used
+- `MobDefenceData`: UUID of a mob defending an attack made against it, plus the style of that attack and the damage it took
 
 For detailed API documentation, see the Javadoc comments in the source code.
 
@@ -442,7 +456,7 @@ For detailed API documentation, see the Javadoc comments in the source code.
 - [Farming patch and product values](docs/farming-values.md) — every `patch` and `product`
   string the server currently sends
 - [Mob attack style values](docs/mob-attack-styles.md) — every `style` string the server
-  currently sends with `MOB_ATTACK`
+  currently sends with `MOB_ATTACK` and `MOB_DEFENCE`
 
 ## Support
 
