@@ -31,7 +31,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.AshleyThew:minescape-mod-api:v1.0.14'
+    implementation 'com.github.AshleyThew:minescape-mod-api:v1.0.15'
 }
 ```
 
@@ -54,15 +54,15 @@ tasks.named('jarJar') {
 }
 
 dependencies {
-    implementation 'com.github.AshleyThew:minescape-mod-api:v1.0.14'
-    jarJar(group: 'com.github.AshleyThew', name: 'minescape-mod-api', version: '[v1.0.14]')
+    implementation 'com.github.AshleyThew:minescape-mod-api:v1.0.15'
+    jarJar(group: 'com.github.AshleyThew', name: 'minescape-mod-api', version: '[v1.0.15]')
     jarJar(implementation("com.github.AshleyThew:minescape-mod-api")) {
         version {
-            strictly '[v1.0.14,)'
-            prefer 'v1.0.14'
+            strictly '[v1.0.15,)'
+            prefer 'v1.0.15'
         }
     }
-    additionalRuntimeClasspath("com.github.AshleyThew:minescape-mod-api:v1.0.14")
+    additionalRuntimeClasspath("com.github.AshleyThew:minescape-mod-api:v1.0.15")
 }
 ```
 
@@ -208,6 +208,54 @@ LoginSkillsData loginSkillsData = handler.getData(loginJsonObject, LoginSkillsDa
 System.out.println("Magic level: " + loginSkillsData.getLevel(SkillType.MAGIC));
 System.out.println("Cooking level: " + loginSkillsData.getLevel(SkillType.COOKING));
 ```
+
+### Player Actions
+
+```java
+import com.minescape.mod.api.channel.ChannelDataHandler;
+import com.minescape.mod.api.channel.Channels;
+import com.minescape.mod.api.channel.general.GeneralType;
+import com.minescape.mod.api.channel.general.action.GameplayActionData;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+ChannelDataHandler<GeneralType> handler = new ChannelDataHandler<>(Channels.GENERAL, GeneralType.class);
+
+// One message each time the player starts, cancels or finishes an action —
+// mining a rock, cooking a fish, climbing an agility obstacle. Sent only to
+// the player performing it.
+JsonObject jsonObject = JsonParser.parseString(jsonData).getAsJsonObject();
+if (handler.getType(jsonObject) == GeneralType.GAMEPLAY_ACTION) {
+    GameplayActionData action = handler.getData(jsonObject, GameplayActionData.class);
+
+    if (action.isStarted()) {
+        // durationMillis() is how long it should take, 0 when it has no fixed length
+        System.out.println("Started " + action.action() + " for " + action.durationMillis() + "ms");
+    } else if (action.isFinished()) {
+        System.out.println("Finished " + action.action());
+    } else if (action.isCancelled()) {
+        System.out.println("Cancelled " + action.action());
+    }
+}
+```
+
+Example payloads:
+
+```json
+{"type":"GAMEPLAY_ACTION","data":{"action":"MINING","state":"STARTED","durationMillis":3000}}
+{"type":"GAMEPLAY_ACTION","data":{"action":"MINING","state":"FINISHED","durationMillis":0}}
+{"type":"GAMEPLAY_ACTION","data":{"action":"COOKING","state":"CANCELLED","durationMillis":0}}
+```
+
+Actions replace one another rather than stacking, so starting something new while an
+action is running sends `CANCELLED` for the old one before `STARTED` for the new one.
+A repeating skill sends `FINISHED` and then a fresh `STARTED` for each cycle. Every
+`STARTED` is followed by exactly one `CANCELLED` or `FINISHED`, except when the player
+logs out mid-action.
+
+Action and state names are plain strings so the server can add new ones without an API
+release — treat unrecognised values as valid. For the full list, see
+[docs/action-values.md](docs/action-values.md).
 
 ### Item Consumption, Farming and Mob Combat
 
@@ -448,6 +496,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - `LoginFarmingPlotsData` / `FarmingPlotData`: Farming plots, what is planted and time to next growth
 - `MobAttackData`: UUID of a mob attacking a player, plus the attack style used
 - `MobDefenceData`: UUID of a mob defending an attack made against it, plus the style of that attack and the damage it took
+- `GameplayActionData`: the action the player started, cancelled or finished, plus how long a started action should take
 
 For detailed API documentation, see the Javadoc comments in the source code.
 
@@ -457,6 +506,8 @@ For detailed API documentation, see the Javadoc comments in the source code.
   string the server currently sends
 - [Mob attack style values](docs/mob-attack-styles.md) — every `style` string the server
   currently sends with `MOB_ATTACK` and `MOB_DEFENCE`
+- [Action values](docs/action-values.md) — every `action` and `state` string the server
+  currently sends with `GAMEPLAY_ACTION`
 
 ## Support
 

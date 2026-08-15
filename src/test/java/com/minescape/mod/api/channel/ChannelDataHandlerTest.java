@@ -12,6 +12,7 @@ import com.minescape.mod.api.channel.general.farming.FarmingPlotData;
 import com.minescape.mod.api.channel.general.farming.GameplayFarmingPlantedData;
 import com.minescape.mod.api.channel.general.farming.LoginFarmingPlotsData;
 import com.minescape.mod.api.channel.general.item.GameplayItemConsumedData;
+import com.minescape.mod.api.channel.general.action.GameplayActionData;
 import com.minescape.mod.api.channel.general.mob.MobAttackData;
 import com.minescape.mod.api.channel.general.mob.MobDefenceData;
 import com.minescape.mod.api.channel.general.GeneralType;
@@ -879,5 +880,105 @@ class ChannelDataHandlerTest {
         };
 
         assertEquals("Defended MAGIC for 3", result);
+    }
+
+    @Test
+    void testHandleGeneralChannelActionStarted() {
+        String jsonString = "{\"type\":\"GAMEPLAY_ACTION\",\"data\":{\"action\":\"MINING\",\"state\":\"STARTED\",\"durationMillis\":3000}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        Object result = generalHandler.getData(jsonObject);
+
+        assertTrue(result instanceof GameplayActionData);
+        GameplayActionData action = (GameplayActionData) result;
+        assertEquals("MINING", action.action());
+        assertEquals("STARTED", action.state());
+        assertEquals(3000L, action.durationMillis());
+        assertTrue(action.isStarted());
+        assertFalse(action.isCancelled());
+        assertFalse(action.isFinished());
+        assertFalse(action.hasEnded());
+        assertEquals(GeneralType.GAMEPLAY_ACTION, generalHandler.getType(jsonObject));
+    }
+
+    @Test
+    void testHandleGeneralChannelActionFinished() {
+        String jsonString = "{\"type\":\"GAMEPLAY_ACTION\",\"data\":{\"action\":\"COOKING\",\"state\":\"FINISHED\"}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        GameplayActionData result = generalHandler.getData(jsonObject, GameplayActionData.class);
+
+        assertNotNull(result);
+        assertEquals("COOKING", result.action());
+        assertEquals(0L, result.durationMillis());
+        assertTrue(result.isFinished());
+        assertFalse(result.isStarted());
+        assertTrue(result.hasEnded());
+    }
+
+    @Test
+    void testHandleGeneralChannelActionCancelled() {
+        String jsonString = "{\"type\":\"GAMEPLAY_ACTION\",\"data\":{\"action\":\"WOODCUTTING\",\"state\":\"CANCELLED\"}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        GameplayActionData result = generalHandler.getData(jsonObject, GameplayActionData.class);
+
+        assertNotNull(result);
+        assertEquals("WOODCUTTING", result.action());
+        assertTrue(result.isCancelled());
+        assertFalse(result.isFinished());
+        assertTrue(result.hasEnded());
+    }
+
+    @Test
+    void testHandleActionUnknownState() {
+        // An unrecognised state must parse rather than throw, so newer servers stay readable
+        String jsonString = "{\"type\":\"GAMEPLAY_ACTION\",\"data\":{\"action\":\"SOME_NEW_ACTION\",\"state\":\"PAUSED\"}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        GameplayActionData result = generalHandler.getData(jsonObject, GameplayActionData.class);
+
+        assertNotNull(result);
+        assertEquals("SOME_NEW_ACTION", result.action());
+        assertEquals("PAUSED", result.state());
+        assertFalse(result.isStarted());
+        assertFalse(result.isCancelled());
+        assertFalse(result.isFinished());
+        assertFalse(result.hasEnded());
+    }
+
+    @Test
+    void testGameplayActionDataEquality() {
+        GameplayActionData data1 = new GameplayActionData("MINING", GameplayActionData.STATE_STARTED, 3000L);
+        GameplayActionData data2 = new GameplayActionData("MINING", GameplayActionData.STATE_STARTED, 3000L);
+        GameplayActionData data3 = new GameplayActionData("MINING", GameplayActionData.STATE_STARTED);
+        GameplayActionData data4 = new GameplayActionData("MINING", GameplayActionData.STATE_FINISHED);
+        GameplayActionData data5 = new GameplayActionData("COOKING", GameplayActionData.STATE_STARTED, 3000L);
+
+        assertEquals(data1, data2);
+        assertNotEquals(data1, data3);
+        assertNotEquals(data3, data4);
+        assertNotEquals(data1, data5);
+        assertEquals(data1.hashCode(), data2.hashCode());
+        assertTrue(data1.toString().contains("GameplayActionData"));
+    }
+
+    @Test
+    void testSwitchExpressionWithActionData() {
+        String jsonString = "{\"type\":\"GAMEPLAY_ACTION\",\"data\":{\"action\":\"AGILITY_OBSTACLE\",\"state\":\"STARTED\",\"durationMillis\":1800}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        GeneralType type = generalHandler.getType(jsonObject);
+        Object data = generalHandler.getData(jsonObject);
+
+        String result = switch (type) {
+        case GAMEPLAY_ACTION -> {
+            GameplayActionData action = (GameplayActionData) data;
+            yield action.state() + " " + action.action() + " (" + action.durationMillis() + "ms)";
+        }
+        default -> throw new IllegalArgumentException("Unexpected type: " + type);
+        };
+
+        assertEquals("STARTED AGILITY_OBSTACLE (1800ms)", result);
     }
 }

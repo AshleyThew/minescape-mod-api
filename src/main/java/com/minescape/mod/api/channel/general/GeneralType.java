@@ -2,6 +2,7 @@ package com.minescape.mod.api.channel.general;
 
 import java.util.function.Supplier;
 
+import com.minescape.mod.api.channel.general.action.GameplayActionData;
 import com.minescape.mod.api.channel.general.farming.GameplayFarmingPlantedData;
 import com.minescape.mod.api.channel.general.farming.LoginFarmingPlotsData;
 import com.minescape.mod.api.channel.general.item.GameplayItemConsumedData;
@@ -65,6 +66,10 @@ public enum GeneralType implements Supplier<Class<?>> {
      * every player that can see the mob.
      */
     MOB_DEFENCE(MobDefenceData.class),
+    /**
+     * Data type for when the player starts, cancels or finishes an action.
+     */
+    GAMEPLAY_ACTION(GameplayActionData.class),
     ;
 
     private final Class<?> dataClass;
