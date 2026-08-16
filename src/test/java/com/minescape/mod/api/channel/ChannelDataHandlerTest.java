@@ -13,6 +13,7 @@ import com.minescape.mod.api.channel.general.farming.GameplayFarmingPlantedData;
 import com.minescape.mod.api.channel.general.farming.LoginFarmingPlotsData;
 import com.minescape.mod.api.channel.general.item.GameplayItemConsumedData;
 import com.minescape.mod.api.channel.general.action.GameplayActionData;
+import com.minescape.mod.api.channel.general.action.PlayerActionData;
 import com.minescape.mod.api.channel.general.mob.MobAttackData;
 import com.minescape.mod.api.channel.general.mob.MobDefenceData;
 import com.minescape.mod.api.channel.general.GeneralType;
@@ -961,6 +962,54 @@ class ChannelDataHandlerTest {
         assertNotEquals(data1, data5);
         assertEquals(data1.hashCode(), data2.hashCode());
         assertTrue(data1.toString().contains("GameplayActionData"));
+    }
+
+    @Test
+    void testHandleGeneralChannelPlayerActionStarted() {
+        String jsonString = "{\"type\":\"PLAYER_ACTION\",\"data\":{\"uuid\":\"a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d\",\"action\":\"MINING\",\"state\":\"STARTED\",\"durationMillis\":3000}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        Object result = generalHandler.getData(jsonObject);
+
+        assertTrue(result instanceof PlayerActionData);
+        PlayerActionData action = (PlayerActionData) result;
+        assertEquals(UUID.fromString("a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d"), action.uuid());
+        assertEquals("MINING", action.action());
+        assertEquals("STARTED", action.state());
+        assertEquals(3000L, action.durationMillis());
+        assertTrue(action.isStarted());
+        assertFalse(action.hasEnded());
+        assertEquals(GeneralType.PLAYER_ACTION, generalHandler.getType(jsonObject));
+    }
+
+    @Test
+    void testHandleGeneralChannelPlayerActionFinished() {
+        String jsonString = "{\"type\":\"PLAYER_ACTION\",\"data\":{\"uuid\":\"a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d\",\"action\":\"COOKING\",\"state\":\"FINISHED\"}}";
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
+
+        PlayerActionData result = generalHandler.getData(jsonObject, PlayerActionData.class);
+
+        assertNotNull(result);
+        assertEquals("COOKING", result.action());
+        assertEquals(0L, result.durationMillis());
+        assertTrue(result.isFinished());
+        assertFalse(result.isStarted());
+        assertTrue(result.hasEnded());
+    }
+
+    @Test
+    void testPlayerActionDataEquality() {
+        UUID uuid = UUID.fromString("a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d");
+        PlayerActionData data1 = new PlayerActionData(uuid, "MINING", GameplayActionData.STATE_STARTED, 3000L);
+        PlayerActionData data2 = new PlayerActionData(uuid, "MINING", GameplayActionData.STATE_STARTED, 3000L);
+        PlayerActionData data3 = new PlayerActionData(uuid, "MINING", GameplayActionData.STATE_STARTED);
+        PlayerActionData data4 = new PlayerActionData(UUID.randomUUID(), "MINING", GameplayActionData.STATE_STARTED, 3000L);
+
+        assertEquals(data1, data2);
+        assertNotEquals(data1, data3);
+        assertNotEquals(data1, data4);
+        assertEquals(data1.hashCode(), data2.hashCode());
+        assertTrue(data1.toString().contains("PlayerActionData"));
     }
 
     @Test

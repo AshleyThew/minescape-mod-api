@@ -1,15 +1,19 @@
 # Action Values
 
-Reference for the string values carried by `GAMEPLAY_ACTION`:
+Reference for the string values carried by `GAMEPLAY_ACTION` and `PLAYER_ACTION`:
 
-- `GameplayActionData.action()` — the **action** the player is performing
-- `GameplayActionData.state()` — what just happened to it
+- `GameplayActionData.action()` / `PlayerActionData.action()` — the **action** being performed
+- `GameplayActionData.state()` / `PlayerActionData.state()` — what just happened to it
+
+`GAMEPLAY_ACTION` describes the receiving player's own actions; `PLAYER_ACTION` is
+the same information about another visible player, broadcast to everyone who can
+see them and carrying that player's UUID.
 
 Both are strings rather than enums on purpose: the server can add an action or a
 state without requiring a new API release. **Treat any value you do not recognise
 as valid** — ignore it (or display the raw name) rather than throwing.
 
-The lists below are the complete set the server sends as of API `v1.0.15`.
+The lists below are the complete set the server sends as of API `v1.0.16`.
 
 ## States (3)
 
@@ -26,7 +30,9 @@ normal pattern for the repeating skills (mining, cooking, fletching and so on).
 
 Every `STARTED` is eventually followed by exactly one `CANCELLED` or `FINISHED` for
 the same action, with one exception: a player who logs out mid-action gets neither,
-because the action ends with the session.
+because the action ends with the session. `PLAYER_ACTION` has one more caveat: when
+the acting player moves out of view mid-action, the terminal state never arrives,
+so treat a stale action for a player you can no longer see as ended.
 
 ## Actions
 
