@@ -32,7 +32,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.AshleyThew:minescape-mod-api:v1.0.17'
+    implementation 'com.github.AshleyThew:minescape-mod-api:v1.0.18'
 }
 ```
 
@@ -55,15 +55,15 @@ tasks.named('jarJar') {
 }
 
 dependencies {
-    implementation 'com.github.AshleyThew:minescape-mod-api:v1.0.17'
-    jarJar(group: 'com.github.AshleyThew', name: 'minescape-mod-api', version: '[v1.0.17]')
+    implementation 'com.github.AshleyThew:minescape-mod-api:v1.0.18'
+    jarJar(group: 'com.github.AshleyThew', name: 'minescape-mod-api', version: '[v1.0.18]')
     jarJar(implementation("com.github.AshleyThew:minescape-mod-api")) {
         version {
-            strictly '[v1.0.17,)'
-            prefer 'v1.0.17'
+            strictly '[v1.0.18,)'
+            prefer 'v1.0.18'
         }
     }
-    additionalRuntimeClasspath("com.github.AshleyThew:minescape-mod-api:v1.0.17")
+    additionalRuntimeClasspath("com.github.AshleyThew:minescape-mod-api:v1.0.18")
 }
 ```
 
