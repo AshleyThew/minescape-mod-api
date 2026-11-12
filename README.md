@@ -8,6 +8,7 @@ A Java API library for MineScape mod development, providing channel-based commun
 
 - Channel-based data communication system
 - Skills and experience tracking
+- Client-side minimap: decode the server's minimap maps and draw them as the resource pack does
 - Type-safe data structures
 - Comprehensive testing suite
 
@@ -31,7 +32,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.AshleyThew:minescape-mod-api:v1.0.15'
+    implementation 'com.github.AshleyThew:minescape-mod-api:v1.0.17'
 }
 ```
 
@@ -54,15 +55,15 @@ tasks.named('jarJar') {
 }
 
 dependencies {
-    implementation 'com.github.AshleyThew:minescape-mod-api:v1.0.15'
-    jarJar(group: 'com.github.AshleyThew', name: 'minescape-mod-api', version: '[v1.0.15]')
+    implementation 'com.github.AshleyThew:minescape-mod-api:v1.0.17'
+    jarJar(group: 'com.github.AshleyThew', name: 'minescape-mod-api', version: '[v1.0.17]')
     jarJar(implementation("com.github.AshleyThew:minescape-mod-api")) {
         version {
-            strictly '[v1.0.15,)'
-            prefer 'v1.0.15'
+            strictly '[v1.0.17,)'
+            prefer 'v1.0.17'
         }
     }
-    additionalRuntimeClasspath("com.github.AshleyThew:minescape-mod-api:v1.0.15")
+    additionalRuntimeClasspath("com.github.AshleyThew:minescape-mod-api:v1.0.17")
 }
 ```
 
@@ -352,6 +353,28 @@ Patch and product names are plain strings so the server can add new ones without
 release — treat unrecognised values as valid. For the full list of values the server
 currently sends, see [docs/farming-values.md](docs/farming-values.md).
 
+### Minimap
+
+The server draws the minimap into three maps (ids 1000000 to 1000002), which the resource pack's shader puts in a
+corner of the screen. To draw it from a mod instead, hand the maps to a `Minimap` and render it:
+
+```java
+import com.minescape.mod.api.minimap.*;
+
+Minimap minimap = new Minimap();
+// from the client's map state for each of MinimapLayer.values(): layer.mapId() and its 128 x 128 colour bytes
+minimap.accept(layer.mapId(), colours);
+
+if (minimap.isShown()) {
+    MinimapPlacement where = minimap.settings().placement(screenWidth, screenHeight);
+    int[] pixels = minimap.render((int) Math.ceil(where.side()), cameraYaw); // 0xAARRGGBB
+}
+```
+
+Only the ground's map is a picture: drawn as it is, the icons' map shows its icon list and sprite sheet in a line
+along the top. See [the minimap guide](docs/minimap.md) for getting the maps on Fabric and NeoForge, reading the
+icons, dots and hint arrow yourself, and the format.
+
 ### NeoForge Integration
 
 Here's an example of how to integrate the MineScape API with NeoForge's custom packet system:
@@ -497,6 +520,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - `MobAttackData`: UUID of a mob attacking a player, plus the attack style used
 - `MobDefenceData`: UUID of a mob defending an attack made against it, plus the style of that attack and the damage it took
 - `GameplayActionData`: the action the player started, cancelled or finished, plus how long a started action should take
+- `Minimap` / `MinimapMap` / `MinimapRenderer`: the minimap's three maps, decoded (settings, icons, dots, hint arrow) and drawn as the pack's shader draws them
+- `MapPalette`: Minecraft's map colours, byte to ARGB
 
 For detailed API documentation, see the Javadoc comments in the source code.
 
@@ -506,6 +531,8 @@ For detailed API documentation, see the Javadoc comments in the source code.
   string the server currently sends
 - [Mob attack style values](docs/mob-attack-styles.md) — every `style` string the server
   currently sends with `MOB_ATTACK` and `MOB_DEFENCE`
+- [Minimap](docs/minimap.md) — drawing the minimap client side, and the format of its
+  three maps
 - [Action values](docs/action-values.md) — every `action` and `state` string the server
   currently sends with `GAMEPLAY_ACTION`
 
