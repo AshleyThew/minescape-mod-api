@@ -31,6 +31,11 @@ if (minimap.isShown()) {
 }
 ```
 
+`isShown()` is false until the ground's map arrives, and while the player has the minimap turned off. When they turn
+it off, the server marks every layer as off and stops updating them, but the client keeps the last maps it was sent:
+check `minimap.isEnabled()` (or `settings().enabled()`) rather than whether the maps are there. It's on again as soon
+as the server draws the maps again.
+
 `render` draws what the pack's shader draws:
 
 - the ground inside a stone ring with N, E, S and W on it
@@ -83,7 +88,8 @@ been sent.
 
 | Method | Layer | What it is |
 | --- | --- | --- |
-| `settings()` | any | `MinimapSettings`: north up, corner, size, offsets in GUI pixels |
+| `settings()` | any | `MinimapSettings`: on or off, north up, corner, size, offsets in GUI pixels |
+| `isEnabled()` | any | whether the player has the minimap on (true until a layer says otherwise) |
 | `groundArgb()` | ground | the ground as a 128 x 128 picture, clear outside the ring and black where unmapped |
 | `icons()` | icons | `List<MinimapIcon>`: slot, `u`, `v`, nearest first, at most 24 |
 | `sprite(slot)` / `spriteWithEdge(slot)` | icons | an icon's 13 x 13 sprite, or the 15 x 15 the shader draws |
@@ -125,6 +131,7 @@ Row 0 of every layer:
 | 11–14 | how far it's moved up, in GUI pixels, plus 128 |
 | 15–18 | dots map only: the hint arrow's `u`, plus 128 when the place is past the map |
 | 19–22 | dots map only: the hint arrow's `v` |
+| 23 | 19 once the player has turned the minimap off, sent as it goes; anything else while it's on |
 
 Icons map, from flat index 128 (row 1): 11 digits for each icon, in the order the icons are listed. The list ends at
 the first icon whose digits aren't all digits. The value packs the icon's slot and position as

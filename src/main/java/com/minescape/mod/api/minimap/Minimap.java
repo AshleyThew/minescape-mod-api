@@ -153,12 +153,23 @@ public final class Minimap {
     }
 
     /**
-     * Whether there's a minimap to show: the server has sent its ground.
+     * Whether there's a minimap to show: the server has sent its ground, and the player has it on.
      *
-     * @return true once the ground's map is in
+     * @return true once the ground's map is in, while {@link #isEnabled()}
      */
     public boolean isShown() {
-        return ground() != null;
+        return ground() != null && isEnabled();
+    }
+
+    /**
+     * Whether the player has the minimap on. When they turn it off the server marks every layer so, and stops
+     * updating them: the client keeps the last maps it was sent, which aren't to be drawn. It's on again as soon
+     * as the server draws the maps again. True with no layer in yet, and from a server too old to say.
+     *
+     * @return false once the server has said the minimap is off
+     */
+    public boolean isEnabled() {
+        return settings().enabled();
     }
 
     /**

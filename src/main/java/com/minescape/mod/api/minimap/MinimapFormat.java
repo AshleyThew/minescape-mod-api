@@ -25,6 +25,12 @@ final class MinimapFormat {
     /** The byte at {@link #NORTH_UP_AT} when the map keeps north up. */
     static final int NORTH_UP = 19;
 
+    /**
+     * Row 0, after the hint arrow's digits, on every layer: {@link #HIDDEN} once the player has turned the minimap off
+     * (the server sends it as the minimap goes; the client keeps the last maps it was sent), anything else while it's on.
+     */
+    static final int HIDDEN_AT = 23, HIDDEN = 19;
+
     /** The icons' list: from the second row, {@link #ICON_DIGITS} digits an icon, at most {@link #MAX_ICONS}. */
     static final int ICON_LIST = SIZE, ICON_DIGITS = 11, MAX_ICONS = 24;
 

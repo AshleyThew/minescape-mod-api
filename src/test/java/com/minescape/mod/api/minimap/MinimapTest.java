@@ -50,6 +50,35 @@ class MinimapTest {
     }
 
     @Test
+    void turnedOffIsRead() {
+        Minimap minimap = new Minimap();
+        assertTrue(minimap.isEnabled());
+        assertFalse(minimap.isShown());
+        for (MinimapLayer layer : MinimapLayer.values()) {
+            minimap.accept(layer.mapId(), MinimapTestMaps.map(layer));
+        }
+        assertTrue(minimap.isEnabled());
+        assertTrue(minimap.isShown());
+        // the server turns it off: one pixel in each layer's row 0, the rest left as it was
+        for (MinimapLayer layer : MinimapLayer.values()) {
+            assertTrue(minimap.update(layer.mapId(), MinimapFormat.HIDDEN_AT, 0, 1, 1, new byte[] { (byte)MinimapFormat.HIDDEN }));
+        }
+        assertFalse(minimap.isEnabled());
+        assertFalse(minimap.isShown());
+        assertFalse(minimap.settings().enabled());
+        assertTrue(minimap.ground() != null);
+        // and on again, as the server draws the maps again
+        for (MinimapLayer layer : MinimapLayer.values()) {
+            minimap.update(layer.mapId(), MinimapFormat.HIDDEN_AT, 0, 1, 1, new byte[] { 0 });
+        }
+        assertTrue(minimap.isEnabled());
+        assertTrue(minimap.isShown());
+        // settings made the old way are on
+        assertTrue(new MinimapSettings(false, MinimapCorner.TOP_RIGHT, MinimapSize.NORMAL, 0, 0).enabled());
+        assertTrue(MinimapSettings.DEFAULT.enabled());
+    }
+
+    @Test
     void settingsAreRead() {
         byte[] map = MinimapTestMaps.map(MinimapLayer.GROUND);
         assertEquals(MinimapSettings.DEFAULT, MinimapMap.of(map).settings());

@@ -3,16 +3,31 @@ package com.minescape.mod.api.minimap;
 /**
  * How the player has the minimap set: the same in every layer's row 0.
  *
+ * @param enabled whether the player has the minimap on; once they turn it off the server says so and stops updating
+ *                the maps, which the client still holds as they were
  * @param northUp whether the map stays with north up, instead of turning with the camera
  * @param corner  where on the screen it goes
  * @param size    how big it is
  * @param offsetX how far it's moved right from where its corner puts it, in GUI pixels
  * @param offsetY how far it's moved up from where its corner puts it, in GUI pixels
  */
-public record MinimapSettings(boolean northUp, MinimapCorner corner, MinimapSize size, int offsetX, int offsetY) {
+public record MinimapSettings(boolean enabled, boolean northUp, MinimapCorner corner, MinimapSize size, int offsetX, int offsetY) {
 
     /** What a map with no settings in it means: the defaults. */
-    public static final MinimapSettings DEFAULT = new MinimapSettings(false, MinimapCorner.TOP_RIGHT, MinimapSize.NORMAL, 0, 0);
+    public static final MinimapSettings DEFAULT = new MinimapSettings(true, false, MinimapCorner.TOP_RIGHT, MinimapSize.NORMAL, 0, 0);
+
+    /**
+     * Settings with the minimap on, as before {@link #enabled()} was sent.
+     *
+     * @param northUp whether the map stays with north up
+     * @param corner  where on the screen it goes
+     * @param size    how big it is
+     * @param offsetX how far it's moved right, in GUI pixels
+     * @param offsetY how far it's moved up, in GUI pixels
+     */
+    public MinimapSettings(boolean northUp, MinimapCorner corner, MinimapSize size, int offsetX, int offsetY) {
+        this(true, northUp, corner, size, offsetX, offsetY);
+    }
 
     /**
      * Reads the settings from a layer's row 0.
@@ -21,13 +36,15 @@ public record MinimapSettings(boolean northUp, MinimapCorner corner, MinimapSize
      * @return the settings
      */
     public static MinimapSettings of(byte[] colours) {
+        // an older server never sends the off mark: on
+        boolean enabled = (colours[MinimapFormat.HIDDEN_AT] & 0xFF) != MinimapFormat.HIDDEN;
         boolean northUp = (colours[MinimapFormat.NORTH_UP_AT] & 0xFF) == MinimapFormat.NORTH_UP;
         MinimapCorner corner = MinimapCorner.of(colours[MinimapFormat.CORNER_AT]);
         MinimapSize size = MinimapSize.of(colours[MinimapFormat.SIZE_AT]);
         long x = MinimapFormat.number(colours, MinimapFormat.OFFSET_X_AT, MinimapFormat.NUMBER_DIGITS);
         long y = MinimapFormat.number(colours, MinimapFormat.OFFSET_Y_AT, MinimapFormat.NUMBER_DIGITS);
         // an older server sends no offsets, which is not moved
-        return new MinimapSettings(northUp, corner, size, x < 0 ? 0 : (int)x - 128, y < 0 ? 0 : (int)y - 128);
+        return new MinimapSettings(enabled, northUp, corner, size, x < 0 ? 0 : (int)x - 128, y < 0 ? 0 : (int)y - 128);
     }
 
     /**
